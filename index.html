@@ -96,53 +96,70 @@
             body.print-ficha #print-cart { display: none !important; }
             body.print-cart #print-ficha { display: none !important; }
 
-            /* Ficha */
-            #print-ficha { font-size: 10px; }
-            .header-print { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 4px; }
-            .header-content { flex-grow: 1; text-align: center; padding-right: 10px; }
-            .header-content img { max-width: 100%; max-height: 50px; margin-bottom: 4px; }
-            .header-content h1 { font-size: 12px; margin: 0; font-weight: bold; }
-            .photo-box { width: 2.2cm; height: 3.0cm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+           /* Ficha */
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            #print-ficha { font-family: Arial, sans-serif; font-size: 12px; color: #000; }
+            .header-print { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
+            .header-content { flex-grow: 1; text-align: center; padding-right: 15px; display: flex; flex-direction: column; justify-content: center; }
+            #header-text-default h1 { font-size: 16px; margin: 0; text-transform: uppercase; }
+            #header-text-default h2 { font-size: 14px; margin: 5px 0 0 0; border: none; font-weight: normal; }
+            .photo-box { width: 3cm; height: 4cm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
             .photo-box img { max-width: 100%; max-height: 100%; object-fit: cover; }
             
-            .section-title { background-color: #f0f0f0 !important; border: 1px solid #000; padding: 2px 5px; font-weight: bold; margin-top: 6px; margin-bottom: 2px; text-transform: uppercase; -webkit-print-color-adjust: exact; font-size: 9px; }
-            .data-row { display: flex; border-bottom: 1px solid #ccc; padding: 1px 0; }
-            .data-col { flex: 1; padding-right: 8px; }
-            .data-label { font-weight: bold; display: block; font-size: 8px; color: #555; }
-            .data-value { display: block; font-size: 11px; margin-top: 1px; min-height: 12px; }
+            .section-title { background-color: #f0f0f0 !important; border: 1px solid #000; padding: 5px; font-weight: bold; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; }
+            .data-row { display: flex; border-bottom: 1px solid #ccc; padding: 4px 0; }
+            .data-col { flex: 1; padding-right: 10px; }
+            .data-label { font-weight: bold; display: block; font-size: 10px; color: #555; }
+            .data-value { display: block; font-size: 13px; margin-top: 2px; min-height: 15px; }
             
-            .signatures { margin-top: 15px; display: flex; justify-content: space-between; text-align: center; }
-            .sig-line { width: 45%; border-top: 1px solid #000; padding-top: 3px; font-size: 9px;}
+            .signatures { margin-top: 40px; display: flex; justify-content: space-between; text-align: center; }
+            .sig-line { width: 45%; border-top: 1px solid #000; padding-top: 5px; }
+            .termo { font-size: 10px; text-align: center; margin-top: 25px; font-style: italic; }
 
+            .page-break { page-break-before: always; padding-top: 20px; }
+            .instrucao-corte { font-size: 10px; color: #555; text-align: center; margin-bottom: 15px; font-style: italic; }
+            
             /* Carteirinha */
-            .carteirinha-container { width: 17cm; height: 6.5cm; border: 1px solid #000; border-radius: 6px; margin: 20px auto; display: flex; box-sizing: border-box; background-color: #fff; overflow: hidden; }
-            .carteirinha-lado { flex: 1; width: 50%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; }
-            .carteirinha-frente { border-right: 1px dashed #000; }
+            .carteirinha-container { width: 17cm; height: 6.5cm; border: 2px solid #333; border-radius: 6px; margin: 0 auto; display: flex; box-sizing: border-box; background-color: #fff; overflow: hidden; }
+            .carteirinha-lado { width: 50%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; position: relative; }
+            .carteirinha-frente { border-right: 1px dashed #999; }
             
-            .c-cabecalho { text-align: center; padding: 4px; border-bottom: 1px solid #ccc; display: flex; align-items: center; justify-content: center; min-height: 35px; }
-            .c-cabecalho img { max-height: 28px; max-width: 95%; }
-            .c-cabecalho-texto h3 { margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #000; }
-            .c-cabecalho-texto h4 { margin: 0; font-size: 9px; font-weight: normal; color: #444; }
+            .c-cabecalho { background-color: #004494 !important; color: #ffffff !important; text-align: center; padding: 6px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+            .c-cabecalho h3 { margin: 0; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+            .c-cabecalho h4 { margin: 1px 0 0 0; font-size: 9px; font-weight: normal; color: #eaf4fc; }
             
-            .c-body-frente { display: flex; padding: 8px; height: calc(100% - 35px); gap: 10px; box-sizing: border-box; }
-            .c-foto-mini { width: 3cm; height: 4cm; border: 1px solid #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+            .c-body-frente { display: flex; padding: 8px; height: calc(100% - 30px); box-sizing: border-box; gap: 10px; }
+            .c-coluna-foto { display: flex; flex-direction: column; align-items: center; width: 3cm; flex-shrink: 0; }
+            .c-foto-mini { width: 3cm; height: 4cm; border: 1px solid #999; background-color: #f9f9f9 !important; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
             .c-foto-mini img { width: 100%; height: 100%; object-fit: cover; }
+            .c-validade { font-size: 8px; font-weight: bold; color: #444; margin-top: 4px; text-align: center; }
             
-            .c-coluna-dados { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
-            .c-nome { font-size: 13px; font-weight: 900; text-transform: uppercase; line-height: 1.1; margin-bottom: 6px; }
-            .c-docs { display: flex; justify-content: space-between; border-bottom: 1px dotted #ccc; padding-bottom: 4px; margin-bottom: 6px; }
+            .c-coluna-dados { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; overflow: hidden; }
+            .c-nome { font-size: 13px; font-weight: 900; color: #000; text-transform: uppercase; line-height: 1.1; margin-bottom: 6px; }
+            .c-docs { display: flex; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px dotted #ccc; padding-bottom: 4px; }
+            .c-doc-item { display: flex; flex-direction: column; }
             .c-lbl { font-size: 8px; color: #666; font-weight: bold; text-transform: uppercase; }
-            .c-val { font-size: 11px; font-weight: bold; }
-            .c-cursos-txt { font-size: 10px; font-weight: bold; color: #000; line-height: 1.2; }
+            .c-val { font-size: 11px; font-weight: bold; color: #222; }
+            .c-cursos-box { margin-bottom: 6px; flex-grow: 1; }
+            .c-cursos-txt { font-size: 10px; font-weight: bold; color: #004494 !important; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-            .c-alerta-box { background-color: #fff !important; border: 1px solid #000; border-radius: 4px; padding: 4px 6px; margin-top: auto; }
-            .c-alerta-header { display: flex; justify-content: space-between; border-bottom: 1px solid #ccc; padding-bottom: 2px; margin-bottom: 2px;}
-            .c-badge-sangue { border: 1px solid #000; padding: 1px 4px; border-radius: 3px; font-size: 9px; font-weight: bold; }
-            .c-alerta-linha { font-size: 9px; display: flex; }
-            
-            .c-body-verso { padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: calc(100% - 35px); box-sizing: border-box; }
-            .c-assinaturas { text-align: center; margin-top: auto; margin-bottom: 10px; border-top: 1px solid #000; padding-top: 5px; width: 80%; }
-            .c-barcode-container svg { max-height: 50px; width: 90%; }
+            .c-alerta-box { background-color: #fff0f0 !important; border: 1px solid #ffcccc; border-radius: 4px; padding: 6px; margin-top: auto; display: flex; flex-direction: column; gap: 4px; }
+            .c-alerta-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; border-bottom: 1px solid #ffcccc; padding-bottom: 2px;}
+            .c-alerta-titulo { font-size: 9px; font-weight: bold; color: #cc0000 !important; }
+            .c-badge-sangue { background-color: #cc0000 !important; color: white !important; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: bold; }
+            .c-alerta-linha { font-size: 9px; color: #333; line-height: 1.1; display: flex; }
+            .c-alerta-lbl { font-weight: bold; width: 55px; flex-shrink: 0; }
+            .c-alerta-val { font-weight: normal; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+            .c-body-verso { padding: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center; height: calc(100% - 30px); box-sizing: border-box; }
+            .c-assinaturas { width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: auto; margin-bottom: 15px;}
+            .c-ass-bloco { width: 90%; text-align: center; position: relative;}
+            .c-ass-linha-container { height: 1.5cm; display: flex; align-items: flex-end; justify-content: center; position: relative; margin-bottom: 3px;}
+            .c-ass-linha { border-bottom: 1px solid #000; width: 100%; position: absolute; bottom: 0; z-index: 0; }
+            .c-ass-texto { font-size: 10px; color: #111; font-weight: bold; line-height: 1.2;}
+            .c-ass-subtexto { font-size: 9px; color: #444;}
+            .c-barcode-container { text-align: center; margin-top: auto; width: 100%;}
+            .c-barcode-container svg { max-height: 55px; width: 95%; }
 
             /* Tabelas Partilhadas */
             .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
