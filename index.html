@@ -290,10 +290,120 @@
                         <div style="display: flex; flex-direction: column; gap: 5px;">
                             <label style="font-size: 9pt; font-weight: bold; color: var(--text-muted);">Vincular Aluno (CPF)</label>
                             <input type="text" id="vincular-aluno-cpf" placeholder="000.000.000-00" oninput="mascararCPF(this)" maxlength="14" style="max-width: 250px;">
+                        </div>                
+                       <div id="print-area-aluno">
+    <div id="print-ficha">
+        <div class="header-print">
+            <div class="header-content">
+                <h1>PREFEITURA DE IGUABA GRANDE</h1>
+                <h2>FICHA DE INSCRIÇÃO - CCP</h2>
+            </div>
+            <div class="photo-box"><img id="prt-foto-ficha" src="" alt="Foto"></div>
+        </div>
+        <div class="section-title">Dados Pessoais</div>
+        <div class="data-row">
+            <div class="data-col"><span class="data-label">Nome:</span><span class="data-value" id="prt-nome"></span></div>
+            <div class="data-col"><span class="data-label">CPF:</span><span class="data-value" id="prt-cpf"></span></div>
+            <div class="data-col"><span class="data-label">Nascimento:</span><span class="data-value" id="prt-nasc"></span></div>
+        </div>
+        <div class="data-row">
+            <div class="data-col"><span class="data-label">Sexo:</span><span class="data-value" id="prt-sexo"></span></div>
+            <div class="data-col"><span class="data-label">Escolaridade:</span><span class="data-value" id="prt-esc"></span></div>
+            <div class="data-col"><span class="data-label">Data Cadastro:</span><span class="data-value" id="prt-datacad"></span></div>
+        </div>
+        <div class="section-title">Contato e Endereço</div>
+        <div class="data-row">
+            <div class="data-col"><span class="data-label">Telefone:</span><span class="data-value" id="prt-tel"></span></div>
+            <div class="data-col"><span class="data-label">E-mail:</span><span class="data-value" id="prt-email"></span></div>
+        </div>
+        <div class="data-row">
+            <div class="data-col"><span class="data-label">Logradouro:</span><span class="data-value" id="prt-log"></span></div>
+            <div class="data-col"><span class="data-label">Bairro:</span><span class="data-value" id="prt-bairro"></span></div>
+        </div>
+        <div class="data-row">
+            <div class="data-col"><span class="data-label">Cidade:</span><span class="data-value" id="prt-cid"></span></div>
+            <div class="data-col"><span class="data-label">CEP:</span><span class="data-value" id="prt-cep"></span></div>
+            <div class="data-col"><span class="data-label">Referência:</span><span class="data-value" id="prt-ref"></span></div>
+        </div>
+        <div class="section-title">Saúde e Social</div>
+        <div class="data-row">
+            <div class="data-col"><span class="data-label">Tipo Sanguíneo:</span><span class="data-value" id="prt-sangue"></span></div>
+            <div class="data-col"><span class="data-label">CadÚnico:</span><span class="data-value" id="prt-cadunico"></span></div>
+        </div>
+        <div class="data-row">
+            <div class="data-col"><span class="data-label">Alergias:</span><span class="data-value" id="prt-alergia"></span></div>
+            <div class="data-col"><span class="data-label">Medicamentos:</span><span class="data-value" id="prt-med"></span></div>
+        </div>
+        <div class="section-title">Cursos Vinculados</div>
+        <div class="data-row"><div class="data-col"><span class="data-value" id="prt-cursos-lista"></span></div></div>
+        <div class="section-title">Observações</div>
+        <div class="data-row"><div class="data-col"><span class="data-value" id="prt-obs"></span></div></div>
+        <div class="signatures">
+            <div class="sig-line">Assinatura do Aluno</div>
+            <div class="sig-line">Responsável CCP</div>
+        </div>
+    </div>
+
+    <div id="print-cart">
+        <div class="carteirinha-container">
+            <div class="carteirinha-lado carteirinha-frente">
+                <div class="c-cabecalho">
+                    <div class="c-cabecalho-texto"><h3>Prefeitura de Iguaba Grande</h3><h4>Centro de Capacitação Profissional</h4></div>
+                </div>
+                <div class="c-body-frente">
+                    <div class="c-foto-mini"><img id="prt-cart-foto" src="" alt="Foto"></div>
+                    <div class="c-coluna-dados">
+                        <div class="c-nome" id="prt-cart-nome"></div>
+                        <div class="c-docs"><div class="c-lbl">CPF: <span class="c-val" id="prt-cart-cpf"></span></div><div class="c-lbl">Nasc: <span class="c-val" id="prt-cart-nasc"></span></div></div>
+                        <div class="c-cursos-txt" id="prt-cart-cursos"></div>
+                        <div class="c-alerta-box">
+                            <div class="c-alerta-header"><span class="c-lbl">Saúde</span><span class="c-badge-sangue" id="prt-cart-sangue"></span></div>
+                            <div class="c-alerta-linha">Alergia: <span id="prt-cart-alergia"></span></div>
+                            <div class="c-alerta-linha">Medic.: <span id="prt-cart-med"></span></div>
                         </div>
-                        <button class="btn btn-primary" onclick="vincularAlunoNaTurma()" style="height: 38px;">🔗 Vincular Aluno</button>
-                        <button class="btn btn-secondary" onclick="editarTurmaAtual()" style="height: 38px; margin-left: auto;">✏️ Editar Turma</button>
-                        <button class="btn btn-danger" onclick="excluirTurmaAtual()" style="height: 38px;">🗑️ Excluir Turma</button>
+                    </div>
+                </div>
+            </div>
+            <div class="carteirinha-lado c-body-verso">
+                <p style="font-size:8px; text-align:center; margin-top:0;">Este documento é pessoal e intransferível.</p>
+                <div class="c-barcode-container"><svg id="barcode"></svg></div>
+                <div class="c-assinaturas">Direção CCP</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="print-area-termo">
+    <div class="print-header">
+        <div class="print-title">Termo de Retirada de Insumos</div>
+    </div>
+    <div class="print-info">
+        <div><strong>Data:</strong> <span id="prt-data-termo"></span></div>
+        <div><strong>Curso:</strong> <span id="prt-curso-termo"></span></div>
+        <div><strong>Instrutor:</strong> <span id="prt-instrutor-termo"></span></div>
+    </div>
+    <table class="print-table">
+        <thead><tr><th style="width: 50px; text-align: center;">Item</th><th>Descrição do Insumo</th><th style="width: 80px; text-align: center;">Qtd</th><th style="width: 80px; text-align: center;">Unid</th></tr></thead>
+        <tbody id="prt-tbody-termo"></tbody>
+    </table>
+    <div class="print-signatures">
+        <div class="print-sig-line">Responsável Estoque</div>
+        <div class="print-sig-line">Instrutor: <span id="prt-sig-instrutor-termo"></span></div>
+    </div>
+</div>
+
+<div id="print-area-estoque">
+    <div class="print-header">
+        <div class="print-title">Relatório de Estoque Atual</div>
+    </div>
+    <div class="print-info">
+        <div><strong>Data de Emissão:</strong> <span id="prt-data-estoque"></span></div>
+    </div>
+    <table class="print-table">
+        <thead><tr><th>Descrição do Insumo</th><th style="width: 100px; text-align: center;">Quantidade</th><th style="width: 100px; text-align: center;">Unidade</th><th style="width: 150px;">Validade</th></tr></thead>
+        <tbody id="prt-tbody-estoque"></tbody>
+    </table>
+</div>
                     </div>
                 </div>
                 <table id="table-alunos-turma"><thead><tr><th>Nome</th><th>CPF</th><th style="text-align: center; width: 150px;">Ação</th></tr></thead><tbody id="tbody-alunos-turma"></tbody></table>
