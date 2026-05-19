@@ -257,91 +257,7 @@
                             <option value="Superior Completo">Superior Completo</option><option value="Pós Graduado(a)">Pós Graduado(a)</option>
                         </select>
                     </div>
-                </div>
-                <h3>Contato e Endereço</h3>
-                <div class="form-grid">
-                    <div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="aluno-tel"></div>
-                    <div class="form-group"><label>E-mail</label><input type="email" id="aluno-email"></div>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group"><label>CEP</label><input type="text" id="aluno-cep"></div>
-                    <div class="form-group"><label>Cidade</label><input type="text" id="aluno-cidade" value="Iguaba Grande"></div>
-                    <div class="form-group"><label>Bairro</label><input type="text" id="aluno-bairro"></div>
-                </div>
-                <div class="form-grid">
-                    <div class="form-group" style="grid-column: span 2;"><label>Logradouro</label><input type="text" id="aluno-logradouro" placeholder="Rua, Av, Número..."></div>
-                    <div class="form-group"><label>Ponto de Referência</label><input type="text" id="aluno-referencia"></div>
-                </div>
-                <h3>Saúde e Dados Sociais</h3>
-                <div class="form-grid">
-                    <div class="form-group"><label>Tipo Sanguíneo</label>
-                        <select id="aluno-sangue"><option value="Não Informado">Não Informado</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option></select>
-                    </div>
-                    <div class="form-group"><label>CadÚnico / NIS</label><input type="text" id="aluno-cadunico" value="Não"></div>
-                </div>
-                <div class="form-grid"><div class="form-group"><label>Alergias?</label><input type="text" id="aluno-alergia" value="Não"></div><div class="form-group"><label>Uso de Medicamento?</label><input type="text" id="aluno-medicamento" value="Não"></div></div>
-                <h3>📚 Cursos e Turmas (Vínculo)</h3>
-                <div class="cursos-grid" id="grid-cursos-dinamico"></div>
-                <div class="form-group" style="margin-top: 15px;"><label>Observações</label><textarea id="aluno-obs" rows="2"></textarea></div>
-                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-primary" onclick="salvarAluno(false, false)">💾 Salvar Apenas</button>
-                    <button type="button" class="btn" style="background: #10b981; color: white;" onclick="salvarAluno(true, false)">📄 Salvar e Imprimir Ficha</button>
-                    <button type="button" class="btn" style="background: #8b5cf6; color: white;" onclick="salvarAluno(false, true)">🪪 Salvar e Imprimir Carteirinha</button>
-                    <button type="button" class="btn btn-warning" onclick="salvarAluno(true, true)">🖨️ Imprimir Ambos</button>
-                </div>
-            </form>
-        </div>
-    </section>
-
-    <!-- ABA CURSOS & TURMAS -->
-    <section id="cursos" class="tab-content">
-        <div class="card">
-            <h2>Gestão de Cursos e Turmas <button class="btn btn-primary" onclick="toggleModalTurma()">+ Adicionar Turma / Curso</button></h2>
-            <div id="cursos-visao-geral"><div id="container-blocos-cursos"></div></div>
-            <div id="cursos-visao-detalhe" style="display: none;">
-                <button class="btn btn-secondary btn-sm" style="margin-bottom: 20px;" onclick="fecharDetalheTurma()">⬅ Voltar</button>
-                <div style="background: rgba(0,0,0,0.15); padding: 20px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
-                    <h3 id="detalhe-turma-titulo" style="color: var(--warning); margin-top: 0; border-bottom: none;"></h3>
-                    <p id="detalhe-turma-stats"></p>
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
-                        <div style="display: flex; flex-direction: column; gap: 5px;">
-                            <label style="font-size: 9pt; font-weight: bold; color: var(--text-muted);">Vincular Aluno (CPF)</label>
-                            <input type="text" id="vincular-aluno-cpf" placeholder="000.000.000-00" oninput="mascararCPF(this)" maxlength="14" style="max-width: 250px;">
-                        </div>                
-                       <div id="print-area-aluno">
-    <div id="print-ficha">
-        <div class="header-print">
-            <div class="header-content">
-                <h1>PREFEITURA DE IGUABA GRANDE</h1>
-                <h2>FICHA DE INSCRIÇÃO - CCP</h2>
-            </div>
-            <div class="photo-box"><img id="prt-foto-ficha" src="" alt="Foto"></div>
-        </div>
-        <div class="section-title">Dados Pessoais</div>
-        <div class="data-row">
-            <div class="data-col"><span class="data-label">Nome:</span><span class="data-value" id="prt-nome"></span></div>
-            <div class="data-col"><span class="data-label">CPF:</span><span class="data-value" id="prt-cpf"></span></div>
-            <div class="data-col"><span class="data-label">Nascimento:</span><span class="data-value" id="prt-nasc"></span></div>
-        </div>
-        <div class="data-row">
-            <div class="data-col"><span class="data-label">Sexo:</span><span class="data-value" id="prt-sexo"></span></div>
-            <div class="data-col"><span class="data-label">Escolaridade:</span><span class="data-value" id="prt-esc"></span></div>
-            <div class="data-col"><span class="data-label">Data Cadastro:</span><span class="data-value" id="prt-datacad"></span></div>
-        </div>
-        <div class="section-title">Contato e Endereço</div>
-        <div class="data-row">
-            <div class="data-col"><span class="data-label">Telefone:</span><span class="data-value" id="prt-tel"></span></div>
-            <div class="data-col"><span class="data-label">E-mail:</span><span class="data-value" id="prt-email"></span></div>
-        </div>
-        <div class="data-row">
-            <div class="data-col"><span class="data-label">Logradouro:</span><span class="data-value" id="prt-log"></span></div>
-            <div class="data-col"><span class="data-label">Bairro:</span><span class="data-value" id="prt-bairro"></span></div>
-        </div>
-        <div class="data-row">
-            <div class="data-col"><span class="data-label">Cidade:</span><span class="data-value" id="prt-cid"></span></div>
-            <div class="data-col"><span class="data-label">CEP:</span><span class="data-value" id="prt-cep"></span></div>
-            <div class="data-col"><span class="data-label">Referência:</span><span class="data-value" id="prt-ref"></span></div>
-        </div>
+              
         <div class="section-title">Saúde e Social</div>
         <div class="data-row">
             <div class="data-col"><span class="data-label">Tipo Sanguíneo:</span><span class="data-value" id="prt-sangue"></span></div>
@@ -360,7 +276,6 @@
             <div class="sig-line">Responsável CCP</div>
         </div>
     </div>
-
     <div id="print-cart">
         <div class="carteirinha-container">
             <div class="carteirinha-lado carteirinha-frente">
@@ -452,7 +367,9 @@
             <table><thead><tr><th>Descrição</th><th>Qtd</th><th>Unidade</th><th>Validade</th><th style="text-align: center;">Ações</th></tr></thead><tbody id="lista-estoque-body"></tbody></table>
         </div>
     </section>
-
+<div id="print-area-aluno"><div id="print-ficha"></div><div id="print-cart"></div></div>
+<div id="print-area-termo"></div>
+<div id="print-area-estoque"></div>
     <!-- ABA HISTÓRICO -->
     <section id="historico" class="tab-content"><div class="card"><h2>Histórico <button class="btn btn-danger btn-sm" onclick="limparFiltrosHistorico()">Limpar Filtros</button></h2><div class="form-grid"><input type="date" id="hist-data-inicio"><input type="date" id="hist-data-fim"><input type="text" id="hist-instrutor" placeholder="Instrutor..."><button class="btn btn-primary" onclick="carregarHistorico()">Filtrar</button></div><table><thead><tr><th>Data</th><th>Curso</th><th>Instrutor</th><th>Itens</th><th style="text-align: center;">Ações</th></tr></thead><tbody id="lista-historico-body"></tbody></table></div></section>
 </div>
