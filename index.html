@@ -38,6 +38,7 @@
         h3 { color: var(--text-main); font-size: 12pt; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 25px; }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
         .form-group { display: flex; flex-direction: column; gap: 5px; }
         label { font-size: 9pt; font-weight: 600; color: var(--text-muted); }
         input, select, textarea { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: 6px; outline: none; }
@@ -165,7 +166,15 @@
             <h2>Registos de Retiradas</h2>
             <div style="overflow-x: auto;">
                 <table>
-                    <thead><tr><th>Data</th><th>Curso</th><th>Instrutor</th><th>Itens</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Curso</th>
+                            <th>Instrutor</th>
+                            <th>Itens</th>
+                            <th style="text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
                     <tbody id="lista-historico-body"></tbody>
                 </table>
             </div>
@@ -193,7 +202,7 @@
                 await carregarPerfilUtilizador();
             }
         } catch (err) {
-            console.error("Erro ao verificar sessão ativa:", err.message);
+            console.error("Erro ao verificar sessão activa:", err.message);
         }
     });
 
@@ -243,7 +252,6 @@
     function toggleFormNovoItem() { const f = document.getElementById('form-novo-item'); f.style.display = f.style.display === 'none' ? 'block' : 'none'; document.getElementById('form-retirada').style.display = 'none'; }
     function toggleFormRetirada() { const f = document.getElementById('form-retirada'); f.style.display = f.style.display === 'none' ? 'block' : 'none'; document.getElementById('form-novo-item').style.display = 'none'; atualizarSelectRetirada(); }
 
-    // Função Adicionar Item Fielmente Importada do V22
     async function salvarNovoItem() {
         const item = document.getElementById('new-item-desc').value.trim();
         const qtd = parseFloat(document.getElementById('new-item-qtd').value) || 0;
@@ -281,7 +289,7 @@
                 }
             }
             body.innerHTML += `<tr><td><strong>${i.item}</strong></td><td>${i.quantidade}</td><td><span class="badge badge-warning">${i.unidade}</span></td><td ${classe}>${dt}</td>
-                <td style="text-align: center;">
+                <td style="text-align: center; white-space: nowrap;">
                     <button class="btn btn-secondary btn-sm" onclick="registrarEntrada('${i.id}', '${i.item}', ${i.quantidade})">+ Entrada</button>
                     <button class="btn btn-danger btn-sm" onclick="excluirItem('${i.id}', '${i.item}')">🗑️ Rem</button>
                 </td></tr>`;
@@ -314,15 +322,105 @@
     function removerDoCarrinho(id) { carrinhoRetirada = carrinhoRetirada.filter(c => c.id !== id); renderCarrinho(); }
     function renderCarrinho() { const l = document.getElementById('ret-cart-list'); if(carrinhoRetirada.length === 0) { l.innerHTML = '<div style="text-align: center; font-size: 9pt;">Vazio.</div>'; return; } l.innerHTML = carrinhoRetirada.map(c => `<div class="cart-item"><span>${c.nome}</span><span>${c.qtd} ${c.unidade}</span><button class="btn-sm btn-danger" onclick="removerDoCarrinho('${c.id}')">X</button></div>`).join(''); }
 
-    async function finalizarRetirada() {
-        const curso = document.getElementById('ret-destino').value; const inst = document.getElementById('ret-instrutor').value.trim();
-        if(!curso || !inst || carrinhoRetirada.length === 0) return;
-        const { error: errReg } = await supa.from('registro_retiradas').insert({ curso, instrutor: inst, itens_retirados: carrinhoRetirada });
-        if(errReg) { alert("Erro ao registrar: " + errReg.message); return; }
-        for(let c of carrinhoRetirada) { const it = itensEstoqueGlobais.find(i => i.id === c.id); await supa.from('estoque_insumos').update({ quantidade: it.quantidade - c.qtd }).eq('id', c.id); }
+    function gerarImpressaoRetirada(registro) {
+        const janelaImpressao = window.open('', '_blank', 'width=900,height=700');
+        const dataFormatada = new Date(registro.data_retirada).toLocaleString('pt-BR');
         
-        alert('Retirada cadastrada com sucesso!');
-        carrinhoRetirada = []; renderCarrinho(); document.getElementById('ret-instrutor').value = ''; toggleFormRetirada(); carregarEstoque();
+        const linhasTabela = registro.itens_retirados.map(it => {
+            return `<tr>
+                <td>${it.nome}</td>
+                <td style="text-align: center;">${it.qtd}</td>
+                <td style="text-align: center;">${it.unidade}</td>
+            </tr>`;
+        }).join('');
+
+        janelaImpressao.document.write(`
+            <html>
+            <head>
+                <title>Comprovante de Retirada - CCP</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; color: black; background: white; }
+                    .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                    .print-title { font-size: 14pt; font-weight: bold; margin: 10px 0; text-transform: uppercase; }
+                    .print-info { font-size: 11pt; margin-bottom: 20px; line-height: 1.6; }
+                    .print-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 11pt; }
+                    .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+                    .print-table th { background-color: #f0f0f0 !important; font-weight: bold; }
+                    .print-signatures { display: flex; justify-content: space-around; margin-top: 60px; }
+                    .print-sig-line { width: 40%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 10pt; }
+                </style>
+            </head>
+            <body>
+                <div class="print-header">
+                    <div class="print-title">Recibo de Retirada de Material - CCP</div>
+                </div>
+                <div class="print-info">
+                    <strong>Data/Hora:</strong> ${dataFormatada}<br>
+                    <strong>Curso Destino:</strong> ${registro.curso}<br>
+                    <strong>Instrutor/Responsável:</strong> ${registro.instrutor}
+                </div>
+                <table class="print-table">
+                    <thead>
+                        <tr>
+                            <th>Item / Insumo</th>
+                            <th style="text-align: center;">Quantidade</th>
+                            <th style="text-align: center;">Unidade</th>
+                        </tr>
+                    </thead>
+                    <tbody>${linhasTabela}</tbody>
+                </table>
+                <div class="print-signatures">
+                    <div class="print-sig-line">Instrutor (Assinatura)</div>
+                    <div class="print-sig-line">Responsável pelo Estoque</div>
+                </div>
+            </body>
+            </html>
+        `);
+
+        janelaImpressao.document.close();
+        setTimeout(() => {
+            janelaImpressao.print();
+            janelaImpressao.close();
+        }, 300);
+    }
+
+    async function finalizarRetirada() {
+        const curso = document.getElementById('ret-destino').value.trim(); 
+        const inst = document.getElementById('ret-instrutor').value.trim();
+        
+        if(!curso || !inst || carrinhoRetirada.length === 0) { 
+            alert("Preencha todos os campos e adicione itens ao carrinho."); 
+            return; 
+        }
+        
+        const { data: novoRegistro, error: errReg } = await supa
+            .from('registro_retiradas')
+            .insert({ curso, instrutor: inst, itens_retirados: carrinhoRetirada })
+            .select()
+            .single();
+
+        if(errReg) { 
+            alert("Erro ao registrar no banco de dados: " + errReg.message); 
+            return; 
+        }
+        
+        for(let c of carrinhoRetirada) { 
+            const it = itensEstoqueGlobais.find(i => i.id === c.id); 
+            if (it) {
+                await supa.from('estoque_insumos').update({ quantidade: it.quantidade - c.qtd }).eq('id', c.id); 
+            }
+        }
+        
+        alert('Retirada cadastrada com sucesso! Iniciando impressão do comprovante...');
+        
+        gerarImpressaoRetirada(novoRegistro);
+        
+        carrinhoRetirada = []; 
+        renderCarrinho(); 
+        document.getElementById('ret-instrutor').value = ''; 
+        document.getElementById('ret-destino').value = ''; 
+        toggleFormRetirada(); 
+        carregarEstoque();
     }
 
     function filtrarEstoque() { const t = document.getElementById('busca-estoque').value.toLowerCase(); document.querySelectorAll('#lista-estoque-body tr').forEach(l => { l.style.display = l.querySelector('td:first-child').innerText.toLowerCase().includes(t) ? '' : 'none'; }); }
@@ -332,13 +430,63 @@
         let q = supa.from('registro_retiradas').select('*').order('data_retirada', { ascending: false });
         const ini = document.getElementById('hist-data-inicio').value; const fim = document.getElementById('hist-data-fim').value; const inst = document.getElementById('hist-instrutor').value.trim();
         if(ini) q = q.gte('data_retirada', ini); if(fim) q = q.lte('data_retirada', fim + 'T23:59:59'); if(inst) q = q.ilike('instrutor', `%${inst}%`);
-        const { data } = await q;
+        
+        const { data, error } = await q;
+        if(error) { console.error("Erro ao carregar histórico:", error.message); return; }
+        
+        const body = document.getElementById('lista-historico-body');
+        body.innerHTML = '';
+        
         if(data) {
-            document.getElementById('lista-historico-body').innerHTML = data.map(h => `<tr><td>${new Date(h.data_retirada).toLocaleString('pt-BR')}</td><td>${h.curso}</td><td>${h.instrutor}</td><td style="font-size: 8pt;">${h.itens_retirados.map(it=>it.nome).join(', ')}</td></tr>`).join('');
+            data.forEach(h => {
+                const dataLocal = new Date(h.data_retirada).toLocaleString('pt-BR');
+                const itensTexto = h.itens_retirados.map(it => `${it.nome} (${it.qtd} ${it.unidade})`).join(', ');
+                const registroJson = JSON.stringify(h).replace(/"/g, '&quot;');
+                
+                body.innerHTML += `<tr>
+                    <td>${dataLocal}</td>
+                    <td>${h.curso}</td>
+                    <td>${h.instrutor}</td>
+                    <td style="font-size: 8pt;">${itensTexto}</td>
+                    <td style="text-align: center; white-space: nowrap;">
+                        <button class="btn btn-primary btn-sm" onclick="reimprimirRetirada('${registroJson}')">🖨️ Reimp.</button>
+                        <button class="btn btn-danger btn-sm" onclick="removerRetirada('${h.id}', '${registroJson}')">🗑️ Estornar</button>
+                    </td>
+                </tr>`;
+            });
         }
     }
 
-    // ALTERNATIVA B: Função de Impressão Desvinculada de restrição por iFrame
+    function reimprimirRetirada(registroStr) {
+        const registro = JSON.parse(registroStr.replace(/&quot;/g, '"'));
+        gerarImpressaoRetirada(registro);
+    }
+
+    async function removerRetirada(id, registroStr) {
+        const registro = JSON.parse(registroStr.replace(/&quot;/g, '"'));
+        
+        const confirma = confirm(`Deseja realmente remover esta saída?\nEsta ação irá deletar o registro histórico e DEVOLVER os itens retirados ao saldo atual do estoque.`);
+        if(!confirma) return;
+
+        for(let c of registro.itens_retirados) {
+            const { data: itemDb } = await supa.from('estoque_insumos').select('quantidade').eq('id', c.id).single();
+            if(itemDb) {
+                const novaQtd = itemDb.quantidade + c.qtd;
+                await supa.from('estoque_insumos').update({ quantidade: novaQtd }).eq('id', c.id);
+            }
+        }
+
+        const { error } = await supa.from('registro_retiradas').delete().eq('id', id);
+        
+        if(error) {
+            alert("Erro ao remover registro: " + error.message);
+        } else {
+            alert("Saída estornada e estoque atualizado com sucesso!");
+            carregarHistorico();
+            carregarEstoque();
+        }
+    }
+
     function imprimirEstoque() {
         const janelaImpressao = window.open('', '_blank', 'width=900,height=700');
         const dataAtual = new Date().toLocaleDateString('pt-BR');
