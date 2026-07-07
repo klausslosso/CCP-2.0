@@ -329,9 +329,18 @@
                 }
             }
             
+            // Tratamento direcionado para o perfil Admin
+            const pUpper = perfilAtual ? perfilAtual.toUpperCase() : '';
+            const ehAdmin = (pUpper === 'ADMIN');
+
+            const btnEditar = ehAdmin 
+                ? `<button class="btn btn-warning btn-sm" onclick="editarItem('${i.id}')">✏️ Editar</button>` 
+                : '';
+
             const acoesHtml = (perfilAtual === 'Diretora') 
                 ? `<span style="color:var(--text-muted); font-size:9pt;">Visualização apenas</span>`
                 : `<button class="btn btn-secondary btn-sm" onclick="registrarEntrada('${i.id}', '${i.item}', ${i.quantidade})">+ Entrada</button>
+                   ${btnEditar}
                    <button class="btn btn-danger btn-sm" onclick="excluirItem('${i.id}', '${i.item}')">🗑️ Rem</button>`;
 
             body.innerHTML += `<tr><td><strong>${i.item}</strong></td><td>${i.quantidade}</td><td><span class="badge badge-warning">${i.unidade}</span></td><td ${classe}>${dt}</td>
@@ -339,6 +348,53 @@
         });
         document.getElementById('validade-alerts').style.display = hasAlerts ? 'block' : 'none';
         atualizarSelectRetirada();
+    }
+
+    async function editarItem(id) {
+        const pUpper = perfilAtual ? perfilAtual.toUpperCase() : '';
+        if (pUpper !== 'ADMIN') {
+            alert("Acesso negado. Operação restrita ao perfil Admin.");
+            return;
+        }
+
+        const itemDb = itensEstoqueGlobais.find(i => i.id === id);
+        if (!itemDb) return;
+
+        const novoNome = prompt("Nova descrição do item:", itemDb.item);
+        if (novoNome === null) return; 
+
+        const novaQtd = prompt("Nova quantidade total em estoque:", itemDb.quantidade);
+        if (novaQtd === null) return;
+
+        const novaUn = prompt("Nova unidade (Ex: UN, KG, LT, PCT, CX):", itemDb.unidade);
+        if (novaUn === null) return;
+
+        let novaValidade = itemDb.validade || "";
+        const inputValidade = prompt("Nova validade (AAAA-MM-DD) ou deixe em branco para sem validade:", novaValidade);
+        if (inputValidade === null) return;
+        novaValidade = inputValidade.trim() === "" ? null : inputValidade;
+
+        const qtdParse = parseFloat(novaQtd);
+        if (isNaN(qtdParse) || qtdParse < 0) {
+            alert("Valor inválido inserido para a quantidade.");
+            return;
+        }
+
+        const { error } = await supa
+            .from('estoque_insumos')
+            .update({ 
+                item: novoNome.trim(), 
+                quantidade: qtdParse,
+                unidade: novaUn.toUpperCase(),
+                validade: novaValidade
+            })
+            .eq('id', id);
+
+        if (error) {
+            alert("Falha na comunicação com o banco de dados: " + error.message);
+        } else {
+            carregarEstoque();
+        }
     }
 
     async function registrarEntrada(id, nome, qtdAtual) {
