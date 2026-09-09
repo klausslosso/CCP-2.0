@@ -1,180 +1,528 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGE CCP - Gestão de Estoque</title>
+    <title>SGE CCP - Gestão de Estoque e Almoxarifado</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
-        :root {
-            --bg-body: #0f172a; --bg-card: #1e293b; --bg-input: #334155;
-            --text-main: #f8fafc; --text-muted: #94a3b8; --primary: #3b82f6;
-            --primary-hover: #2563eb; --secondary: #10b981; --danger: #ef4444;
-            --warning: #f59e0b; --border: #334155; --transition: all 0.3s ease;
+        /* --- Design System Unificado --- */
+        :root[data-theme="dark"] {
+            --bg-body: #070c18;
+            --bg-overlay: rgba(7, 12, 24, 0.78);
+            --bg-surface: rgba(17, 27, 49, 0.72);
+            --bg-surface-elevated: rgba(30, 41, 59, 0.75);
+            --bg-input: rgba(11, 19, 37, 0.85);
+            --border: rgba(255, 255, 255, 0.12);
+            --border-hover: rgba(56, 189, 248, 0.45);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --primary-hover: #0284c7;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --card-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.6);
+            --img-opacity: 0.25;
+            --transition: all 0.25s ease;
         }
 
-        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-body); color: var(--text-main); margin: 0; line-height: 1.5; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        :root[data-theme="light"] {
+            --bg-body: #f8fafc;
+            --bg-overlay: rgba(248, 250, 252, 0.85);
+            --bg-surface: rgba(255, 255, 255, 0.82);
+            --bg-surface-elevated: rgba(241, 245, 249, 0.85);
+            --bg-input: #ffffff;
+            --border: #cbd5e1;
+            --border-hover: #0284c7;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --primary-glow: rgba(2, 132, 199, 0.15);
+            --secondary: #059669;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --card-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+            --img-opacity: 0.18;
+            --transition: all 0.25s ease;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
         
-        /* Tela de Login Nativa */
-        .login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); display: flex; justify-content: center; align-items: center; z-index: 9999; }
-        .login-card { background: var(--bg-card); padding: 40px; border-radius: 12px; border: 1px solid var(--border); width: 100%; max-width: 400px; text-align: center; }
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            line-height: 1.5; 
+            padding: 20px 15px; 
+            min-height: 100vh;
+            position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
 
-        header { text-align: center; padding: 20px 0; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
-        header h1 { margin: 0; font-size: 22pt; color: var(--primary); }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: url("fundo_gestao.jpg");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            opacity: var(--img-opacity);
+            pointer-events: none;
+            z-index: 0;
+            transition: opacity 0.3s ease;
+        }
 
-        .nav-tabs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 30px; }
-        .tab-btn { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-muted); padding: 10px 18px; border-radius: 8px; cursor: pointer; transition: var(--transition); }
-        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .container { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+
+        /* Login Screen */
+        .login-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--bg-overlay); 
+            backdrop-filter: blur(8px);
+            display: flex; justify-content: center; align-items: center; z-index: 9999; 
+            padding: 20px;
+        }
+        .login-card { 
+            background: var(--bg-surface); 
+            backdrop-filter: blur(16px);
+            padding: 40px 32px; border-radius: 16px; border: 1px solid var(--border); 
+            width: 100%; max-width: 400px; text-align: center; box-shadow: var(--card-shadow); 
+        }
+
+        header { 
+            text-align: center; padding: 15px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 25px; position: relative; 
+        }
+        header h1 { margin: 0; font-size: 1.8rem; font-weight: 800; color: var(--primary); letter-spacing: -0.5px; }
+
+        /* KPIs */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 25px; }
+        .kpi-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--card-shadow);
+        }
+        .kpi-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; margin-bottom: 4px; }
+        .kpi-value { font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin: 0; }
+        .kpi-icon { font-size: 1.8rem; opacity: 0.85; }
+
+        /* Navegação em Abas */
+        .nav-tabs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 25px; }
+        .tab-btn { 
+            background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-muted); 
+            padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.88rem; transition: var(--transition); 
+        }
+        .tab-btn.active { background: var(--primary); color: #04101e; border-color: var(--primary); font-weight: 700; }
+        [data-theme="light"] .tab-btn.active { color: #ffffff; }
 
         .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { background: var(--bg-card); border-radius: 12px; padding: 20px; border: 1px solid var(--border); margin-bottom: 20px; }
-        h2 { font-size: 14pt; margin-top: 0; color: var(--primary); border-left: 4px solid var(--primary); padding-left: 12px; display: flex; justify-content: space-between; align-items: center; }
-        h3 { color: var(--text-main); font-size: 12pt; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 25px; }
+        /* Cartões */
+        .card { 
+            background: var(--bg-surface); 
+            backdrop-filter: blur(14px);
+            border-radius: 14px; padding: 25px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: var(--card-shadow); 
+        }
+        h2 { font-size: 1.25rem; margin-top: 0; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+        h3 { color: var(--primary); font-size: 1.05rem; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-top: 20px; }
 
         .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-size: 9pt; font-weight: 600; color: var(--text-muted); }
-        input, select, textarea { background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: 6px; outline: none; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+        label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        input, select, textarea { 
+            background: var(--bg-input); border: 1px solid var(--border); color: var(--text-main); 
+            padding: 10px 12px; border-radius: 8px; outline: none; font-size: 0.88rem; transition: var(--transition); 
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
         
-        .btn { padding: 10px 15px; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-primary { background: var(--primary); color: white; }
+        /* Botões */
+        .btn { padding: 9px 16px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.85rem; }
+        .btn-primary { background: var(--primary); color: #04101e; }
+        .btn-primary:hover { background: var(--primary-hover); color: #fff; }
         .btn-secondary { background: var(--secondary); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
+        .btn-secondary:hover { background: #0e9f6e; }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-sm { padding: 5px 10px; font-size: 8pt; width: auto; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: var(--warning); color: #04101e; }
+        .btn-warning:hover { background: #d97706; color: #fff; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: var(--bg-surface-elevated); border-color: var(--text-muted); }
+        .btn-sm { padding: 5px 10px; font-size: 0.78rem; border-radius: 6px; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 15px; }
-        th { background: var(--bg-input); text-align: left; padding: 12px; color: var(--primary); border-bottom: 2px solid var(--border); }
-        td { padding: 12px; border-bottom: 1px solid var(--border); }
-        tr:hover { background: rgba(255,255,255,0.02); }
+        /* Tabelas */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 15px; }
+        th { background: var(--bg-surface-elevated); text-align: left; padding: 12px 14px; color: var(--primary); text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.05em; border-bottom: 2px solid var(--border); }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text-main); }
+        tbody tr:hover { background: rgba(255,255,255,0.04); }
 
-        .badge { padding: 2px 8px; border-radius: 4px; font-size: 8pt; font-weight: bold; }
-        .badge-success { background: var(--secondary); color: white; }
-        .badge-warning { background: var(--warning); color: white; }
+        /* Estilos da visualização em acordeão */
+        .tr-grupo-pai { background: rgba(255, 255, 255, 0.03); cursor: pointer; font-weight: 600; }
+        .tr-grupo-pai:hover { background: rgba(56, 189, 248, 0.1) !important; }
+        .tr-filho-lote { background: var(--bg-input); }
+        .tr-filho-lote td { border-bottom: 1px dashed var(--border); }
 
-        .alert-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 8px; padding: 15px; margin-bottom: 20px; display: none; }
-        .alert-item { color: #fca5a5; font-size: 9pt; margin-bottom: 5px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 4px;}
+        .badge { padding: 3px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; display: inline-flex; align-items: center; border: 1px solid transparent; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--secondary); border-color: rgba(16, 185, 129, 0.3); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border-color: rgba(245, 158, 11, 0.3); }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+        .badge-info { background: rgba(56, 189, 248, 0.15); color: var(--primary); border-color: rgba(56, 189, 248, 0.3); }
+
+        .alert-box { background: rgba(239, 68, 68, 0.1); border: 1px solid var(--danger); border-radius: 10px; padding: 16px; margin-bottom: 20px; display: none; }
+        .alert-item { color: #fca5a5; font-size: 0.85rem; margin-bottom: 6px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 4px; }
         .alert-item:last-child { border-bottom: none; }
 
-        .cart-list { background: var(--bg-input); border-radius: 6px; padding: 10px; margin-top: 15px; min-height: 50px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--border); }
+        .cart-list { background: var(--bg-input); border-radius: 8px; padding: 12px; margin-top: 15px; min-height: 50px; border: 1px solid var(--border); }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); }
         .cart-item:last-child { border-bottom: none; }
 
-        /* Regras de Acesso e Ocultação */
+        /* Modais */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px);
+            display: none; justify-content: center; align-items: center; z-index: 10000; padding: 20px;
+        }
+        .modal-card {
+            background: var(--bg-surface); backdrop-filter: blur(18px); border: 1px solid var(--border); border-radius: 16px;
+            width: 100%; max-width: 540px; padding: 28px; box-shadow: var(--card-shadow); max-height: 90vh; overflow-y: auto;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px; }
+        .modal-header h3 { margin: 0; font-size: 1.15rem; color: var(--primary); }
+
         body.readonly-mode .action-only { display: none !important; }
     </style>
 </head>
 <body>
 
+<!-- Catálogo de Sugestões Extraído do Inventário Oficial -->
+<datalist id="catalogo-padrao-insumos">
+    <option value="ABACAXI" data-un="UN" data-cat="Alimentos"></option>
+    <option value="AÇÚCAR" data-un="KG" data-cat="Alimentos"></option>
+    <option value="AÇÚCAR CRISTAL" data-un="KG" data-cat="Alimentos"></option>
+    <option value="AÇÚCAR DE CONFEITEIRO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="AÇÚCAR GRANULADO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="ALHO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="AMENDOIM PICADO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="AMIDO DE MILHO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="AZEITE 500ML" data-un="UN" data-cat="Alimentos"></option>
+    <option value="AZEITONA S/ CAROÇO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="BANANA D'ÁGUA" data-un="KG" data-cat="Alimentos"></option>
+    <option value="BATATA INGLESA" data-un="KG" data-cat="Alimentos"></option>
+    <option value="BATATA PALHA" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CALABRESA" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CANELA EM PÓ" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CEBOLA" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CEREJA MARRASQUINO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CHANTILLY" data-un="LT" data-cat="Alimentos"></option>
+    <option value="CHEIRO VERDE MOLHO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CHOCOLATE COBERTURA BRANCO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="CHOCOLATE EM PÓ 50%" data-un="KG" data-cat="Alimentos"></option>
+    <option value="CHOCOLATE EM PÓ 70%" data-un="KG" data-cat="Alimentos"></option>
+    <option value="CHOCOLATE FRACIONADO 1/2 AMARGO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="COCO RALADO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="COENTRO MOLHO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="COLORAU" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CORANTE EM GEL" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CREME DE CONFEITEIRO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="CREME DE LEITE" data-un="UN" data-cat="Alimentos"></option>
+    <option value="DOCE DE LEITE" data-un="KG" data-cat="Alimentos"></option>
+    <option value="ESSÊNCIA DE BAUNILHA" data-un="LT" data-cat="Alimentos"></option>
+    <option value="FARINHA DE ROSCA" data-un="KG" data-cat="Alimentos"></option>
+    <option value="FARINHA DE TRIGO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="FERMENTO BIOLÓGICO FRESCO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="FERMENTO QUÍMICO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="FERMENTO SECO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="GOIABADA" data-un="KG" data-cat="Alimentos"></option>
+    <option value="GORDURA VEGETAL" data-un="KG" data-cat="Alimentos"></option>
+    <option value="HAMBURGUER" data-un="UN" data-cat="Alimentos"></option>
+    <option value="HORTELÃ MOLHO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="IOGURTE NATURAL" data-un="UN" data-cat="Alimentos"></option>
+    <option value="LEITE CONDENSADO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="LEITE DE COCO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="LEITE EM PÓ" data-un="UN" data-cat="Alimentos"></option>
+    <option value="LEITE INTEGRAL" data-un="LT" data-cat="Alimentos"></option>
+    <option value="LIMÃO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="MAIONESE" data-un="KG" data-cat="Alimentos"></option>
+    <option value="MANTEIGA FOLHADA" data-un="KG" data-cat="Alimentos"></option>
+    <option value="MARGARINA 80%" data-un="KG" data-cat="Alimentos"></option>
+    <option value="MILHO SACHE" data-un="UN" data-cat="Alimentos"></option>
+    <option value="MISTURA PARA PÃO DE QUEIJO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="MOLHO DE TOMATE" data-un="UN" data-cat="Alimentos"></option>
+    <option value="MORANGO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="MUSSARELA" data-un="KG" data-cat="Alimentos"></option>
+    <option value="ÓLEO" data-un="LT" data-cat="Alimentos"></option>
+    <option value="ORÉGANO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="OVOS" data-un="UN" data-cat="Alimentos"></option>
+    <option value="PASTA AMERICANA" data-un="KG" data-cat="Alimentos"></option>
+    <option value="PEITO DE FRANGO S/OSSO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="PRESUNTO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="QUALY" data-un="KG" data-cat="Alimentos"></option>
+    <option value="QUEIJO PRATO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="QUEIJO RALADO" data-un="UN" data-cat="Alimentos"></option>
+    <option value="REQUEIJÃO" data-un="KG" data-cat="Alimentos"></option>
+    <option value="SAL" data-un="KG" data-cat="Alimentos"></option>
+    <option value="SODA LIMONADA" data-un="LT" data-cat="Alimentos"></option>
+    <option value="TEQUILA" data-un="LT" data-cat="Alimentos"></option>
+    <option value="TOMATE" data-un="KG" data-cat="Alimentos"></option>
+    <option value="VINHO TINTO SUAVE" data-un="LT" data-cat="Alimentos"></option>
+</datalist>
+
 <div id="login-screen" class="login-screen">
     <div class="login-card">
-        <h2 style="border:none; justify-content:center; color: var(--primary); font-size: 18pt; margin-bottom: 20px;">SGE CCP - ESTOQUE</h2>
-        <div class="form-group" style="margin-bottom: 15px; text-align: left;">
+        <h2 style="border:none; justify-content:center; color: var(--primary); font-size: 1.5rem; margin-bottom: 15px;">SGE CCP • ESTOQUE</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Almoxarifado e Controle de Suprimentos</p>
+        <div class="form-group" style="margin-bottom: 15px;">
             <label>E-mail Institucional</label>
-            <input type="email" id="login-email" placeholder="utilizador@exemplo.com">
+            <input type="email" id="login-email" placeholder="nome@iguaba.rj.gov.br">
         </div>
-        <div class="form-group" style="margin-bottom: 20px; text-align: left;">
+        <div class="form-group" style="margin-bottom: 24px;">
             <label>Palavra-passe</label>
-            <input type="password" id="login-senha" placeholder="******">
+            <input type="password" id="login-senha" placeholder="••••••••">
         </div>
-        <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="realizarLogin()">Entrar no Sistema</button>
+        <button class="btn btn-primary" style="width: 100%; padding: 12px;" onclick="realizarLogin()">Acessar Almoxarifado</button>
     </div>
 </div>
 
 <div class="container" id="main-content" style="display: none;">
     <header>
-        <h1>GESTÃO DE ESTOQUE - CCP</h1>
-        <p style="color: var(--text-muted); margin: 0;">Prefeitura de Iguaba Grande | Perfil: <span id="user-profile-display"></span></p>
-        <button class="btn btn-danger btn-sm" style="margin-top: 10px;" onclick="encerrarSessao()">Terminar Sessão</button>
+        <h1>GESTÃO DE ESTOQUE & ALMOXARIFADO</h1>
+        <p style="color: var(--text-muted); margin-top: 4px; font-size: 0.85rem;">Centro de Capacitação Profissional • SDETR | Perfil: <span id="user-profile-display" style="color: var(--primary); font-weight: 700;"></span></p>
+        <div style="position: absolute; right: 0; top: 15px; display: flex; gap: 8px;">
+            <button class="btn btn-outline btn-sm" onclick="alternarTemaVisual()" id="btn-alternador-tema">🌙 Modo Escuro</button>
+            <button class="btn btn-danger btn-sm" onclick="encerrarSessao()">Terminar Sessão</button>
+        </div>
     </header>
 
+    <!-- Resumo de Alertas e KPIs Rápidos -->
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Total de Insumos Únicos</div>
+                <div class="kpi-value" id="kpi-total-itens">0</div>
+            </div>
+            <div class="kpi-icon">📦</div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Itens Abaixo do Mínimo</div>
+                <div class="kpi-value" id="kpi-estoque-critico" style="color: var(--danger);">0</div>
+            </div>
+            <div class="kpi-icon">⚠️</div>
+        </div>
+        <div class="kpi-card">
+            <div>
+                <div class="kpi-label">Lotes a Vencer (15 Dias)</div>
+                <div class="kpi-value" id="kpi-lotes-vencer" style="color: var(--warning);">0</div>
+            </div>
+            <div class="kpi-icon">⏳</div>
+        </div>
+    </div>
+
     <nav class="nav-tabs">
-        <button class="tab-btn active" onclick="openTab('estoque')">Estoque</button>
-        <button class="tab-btn" onclick="openTab('historico')">Histórico de Saídas</button>
+        <button class="tab-btn active" onclick="openTab('estoque')">📦 Inventário de Insumos</button>
+        <button class="tab-btn" onclick="openTab('historico')">📋 Histórico de Saídas</button>
+        <button class="tab-btn" onclick="openTab('relatorios')">📊 Consumo por Curso</button>
     </nav>
 
+    <!-- ABA 1: ESTOQUE E INVENTÁRIO -->
     <section id="estoque" class="tab-content active">
         <div id="validade-alerts" class="alert-box">
-            <h4 style="margin: 0 0 10px 0; color: var(--danger);">⚠️ Alerta de Validade (15 dias)</h4>
+            <h4 style="margin: 0 0 10px 0; color: var(--danger); font-size: 0.95rem;">⚠️ Alerta Crítico: Insumos Próximos do Vencimento ou Vencidos</h4>
             <div id="alert-list"></div>
         </div>
         
         <div class="card">
-            <h2>Inventário de Insumos 
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-secondary" onclick="imprimirEstoque()">🖨️ Imprimir Estoque</button>
-                    <button class="btn btn-warning action-only" onclick="toggleFormRetirada()">📦 Nova Retirada</button>
-                    <button class="btn btn-primary action-only" onclick="toggleFormNovoItem()">+ Novo Item</button>
+            <h2>
+                <span>Itens em Almoxarifado</span>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-danger btn-sm action-only" onclick="limparTodosZeradosGlobal()" title="Apaga lotes com quantidade 0">🧹 Limpar Zerados</button>
+                    <button class="btn btn-secondary btn-sm" onclick="imprimirEstoque()">🖨️ Imprimir Estoque</button>
+                    <button class="btn btn-warning btn-sm action-only" onclick="toggleFormRetirada()">📦 Nova Retirada</button>
+                    <button class="btn btn-primary btn-sm action-only" onclick="toggleFormNovoItem()">+ Novo Item</button>
                 </div>
             </h2>
-            
+
+            <!-- Formulário Novo Item com Autocomplete do Catálogo -->
             <div id="form-novo-item" style="display: none; border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px;">
-                <h3 style="margin-top: 0;">Cadastro de Insumo</h3>
+                <h3 style="margin-top: 0;">Cadastro Estruturado de Insumo</h3>
                 <div class="form-grid">
-                    <div class="form-group"><label>Descrição</label><input type="text" id="new-item-desc" placeholder="Ex: Papel A4"></div>
-                    <div class="form-group"><label>Qtd Inicial</label><input type="number" id="new-item-qtd" value="0" min="0" step="any"></div>
-                    <div class="form-group"><label>Unidade</label><select id="new-item-un"><option value="UN">UN</option><option value="KG">KG</option><option value="LT">LT</option><option value="PCT">PCT</option><option value="CX">CX</option></select></div>
-                    <div class="form-group"><label>Validade</label><input type="date" id="new-item-validade"></div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label>Descrição do Insumo (Digite ou selecione)</label>
+                        <input type="text" id="new-item-desc" list="catalogo-padrao-insumos" placeholder="Ex: AÇÚCAR ou digite um novo..." oninput="autoPreencherDoCatalogo(this.value)">
+                    </div>
+                    <div class="form-group">
+                        <label>Categoria Operacional</label>
+                        <select id="new-item-categoria">
+                            <option value="Alimentos">Alimentos / Gastronomia</option>
+                            <option value="Beleza">Beleza e Estética</option>
+                            <option value="Costura">Costura e Artesanato</option>
+                            <option value="Administrativo">Administrativo e Limpeza</option>
+                            <option value="Geral">Uso Geral / Permanente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Qtd Inicial</label>
+                        <input type="number" id="new-item-qtd" value="0" min="0" step="any">
+                    </div>
+                    <div class="form-group">
+                        <label>Unidade</label>
+                        <select id="new-item-un">
+                            <option value="UN">UN</option>
+                            <option value="KG">KG</option>
+                            <option value="LT">LT</option>
+                            <option value="PCT">PCT</option>
+                            <option value="CX">CX</option>
+                            <option value="MTR">METRO</option>
+                            <option value="RL">ROLO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estoque Mínimo (Alerta)</label>
+                        <input type="number" id="new-item-minimo" value="5" min="0">
+                    </div>
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label style="margin: 0;">Data de Validade</label>
+                            <label style="display: flex; align-items: center; gap: 5px; font-size: 0.72rem; cursor: pointer; text-transform: none;">
+                                <input type="checkbox" id="check-sem-validade" onchange="alternarSemValidade(this.checked)" style="cursor: pointer;">
+                                Item sem validade
+                            </label>
+                        </div>
+                        <input type="date" id="new-item-validade">
+                    </div>
                 </div>
-                <div style="margin-top: 15px; display: flex; gap: 10px;"><button class="btn btn-secondary" onclick="salvarNovoItem()">Salvar</button><button class="btn btn-danger" onclick="toggleFormNovoItem()">Cancelar</button></div>
+                <div style="margin-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="salvarNovoItem()">Gravar Insumo</button>
+                    <button class="btn btn-danger btn-sm" onclick="toggleFormNovoItem()">Cancelar</button>
+                </div>
             </div>
 
-            <div id="form-retirada" style="display: none; border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 8px;">
-                <h3 style="margin-top: 0; color: #f59e0b;">📦 Registro de Retirada de Material</h3>
+            <!-- Formulário Retirada Vinculada a Cursos / Turmas -->
+            <div id="form-retirada" style="display: none; border-top: 1px solid var(--border); margin-top: 20px; padding-top: 20px; background: rgba(0,0,0,0.15); padding: 20px; border-radius: 12px;">
+                <h3 style="margin-top: 0; color: var(--warning);">📦 Requisição de Material para Aulas Práticas</h3>
                 <div class="form-grid">
-                    <div class="form-group"><label>Curso Destino</label><input type="text" id="ret-destino" placeholder="Ex: Informática ou Uso Geral"></div>
-                    <div class="form-group"><label>Instrutor</label><input type="text" id="ret-instrutor" placeholder="Nome do responsável"></div>
+                    <div class="form-group">
+                        <label>Curso Vinculado</label>
+                        <select id="ret-curso-select" onchange="atualizarTurmasRetirada(this.value)">
+                            <option value="">Aguarde carregando cursos...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Turma / Horário</label>
+                        <select id="ret-turma-select">
+                            <option value="">Selecione o curso primeiro...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Instrutor Responsável</label>
+                        <select id="ret-instrutor-select">
+                            <option value="">Aguarde carregando instrutores...</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-grid" style="align-items: end; background: var(--bg-card); padding: 15px; border-radius: 6px; margin-top: 15px;">
-                    <div class="form-group" style="flex: 2;"><label>Selecionar Item</label><select id="ret-item-select"><option value="">Aguarde...</option></select></div>
-                    <div class="form-group" style="flex: 1;"><label>Quantidade</label><input type="number" id="ret-qtd" value="1" min="0.1" step="any"></div>
-                    <button class="btn btn-primary" onclick="addRetiradaItem()" style="height: 40px; margin-bottom: 2px;">+ Add</button>
+
+                <div class="form-grid" style="align-items: end; background: var(--bg-surface-elevated); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                    <div class="form-group" style="flex: 2;">
+                        <label>Selecionar Insumo em Saldo (Lote / Validade)</label>
+                        <select id="ret-item-select"><option value="">Aguarde...</option></select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label>Quantidade a Retirar</label>
+                        <input type="number" id="ret-qtd" value="1" min="0.1" step="any">
+                    </div>
+                    <button class="btn btn-primary" onclick="addRetiradaItem()" style="height: 40px; margin-bottom: 2px;">+ Adicionar</button>
                 </div>
-                <div class="cart-list" id="ret-cart-list"><div style="text-align: center; color: var(--text-muted); font-size: 9pt;">Vazio.</div></div>
-                <div style="margin-top: 20px; display: flex; gap: 10px;"><button class="btn btn-secondary" onclick="finalizarRetirada()" style="flex: 1;">✔️ Confirmar Retirada</button><button class="btn btn-danger" onclick="toggleFormRetirada()">Cancelar</button></div>
+
+                <div class="cart-list" id="ret-cart-list">
+                    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">Carrinho de retirada vazio.</div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 0.82rem; cursor: pointer; text-transform: none; color: var(--text-main);">
+                        <input type="checkbox" id="check-imprimir-retirada" checked style="cursor: pointer;">
+                        Emitir / Imprimir comprovante de retirada imediatamente
+                    </label>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="finalizarRetirada()" style="flex: 1;">✔️ Confirmar Retirada</button>
+                    <button class="btn btn-danger btn-sm" onclick="toggleFormRetirada()">Cancelar</button>
+                </div>
             </div>
 
-            <div style="margin-top: 20px; margin-bottom: 10px;"><input type="text" id="busca-estoque" placeholder="🔍 Buscar insumo..." style="width: 100%; max-width: 400px; padding: 10px; border-radius: 6px;" onkeyup="filtrarEstoque()"></div>
+            <!-- Filtros de Busca e Seletor de Modo de Visualização -->
+            <div style="display: flex; gap: 12px; margin: 20px 0 10px; flex-wrap: wrap; align-items: center;">
+                <input type="text" id="busca-estoque" placeholder="🔍 Buscar insumo por nome..." style="flex: 2; min-width: 240px;" onkeyup="filtrarEstoque()">
+                
+                <select id="filtro-categoria-estoque" style="flex: 1; min-width: 180px;" onchange="filtrarEstoque()">
+                    <option value="">Todas as Categorias</option>
+                    <option value="Alimentos">Alimentos / Gastronomia</option>
+                    <option value="Beleza">Beleza e Estética</option>
+                    <option value="Costura">Costura e Artesanato</option>
+                    <option value="Administrativo">Administrativo e Limpeza</option>
+                    <option value="Geral">Uso Geral</option>
+                </select>
+
+                <select id="select-modo-visualizacao" style="flex: 1; min-width: 200px;" onchange="alternarModoVisualizacaoTabela(this.value)">
+                    <option value="agrupado">📂 Visão Agrupada (Acordeão)</option>
+                    <option value="detalhado">📋 Visão Detalhada (Lote a Lote)</option>
+                </select>
+            </div>
 
             <div style="overflow-x: auto;">
                 <table id="table-estoque">
-                    <thead><tr><th>Descrição</th><th>Qtd</th><th>Unidade</th><th>Validade</th><th style="text-align: center;">Ações</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th style="width: 35px;"></th>
+                            <th>Insumo</th>
+                            <th>Categoria</th>
+                            <th style="text-align: center;">Saldo Consolidado</th>
+                            <th>Unidade</th>
+                            <th>Lotes / Validades</th>
+                            <th style="text-align: center; width: 170px;">Ações</th>
+                        </tr>
+                    </thead>
                     <tbody id="lista-estoque-body"></tbody>
                 </table>
             </div>
         </div>
     </section>
 
+    <!-- ABA 2: HISTÓRICO DE SAÍDAS -->
     <section id="historico" class="tab-content">
         <div class="card">
-            <h2>Filtros de Histórico</h2>
+            <h2>Filtros do Livro de Registros</h2>
             <div class="form-grid" style="align-items: flex-end;">
                 <div class="form-group"><label>Data Início</label><input type="date" id="hist-data-inicio"></div>
                 <div class="form-group"><label>Data Fim</label><input type="date" id="hist-data-fim"></div>
-                <div class="form-group"><label>Instrutor</label><input type="text" id="hist-instrutor" placeholder="Instrutor..."></div>
+                <div class="form-group"><label>Instrutor</label><input type="text" id="hist-instrutor" placeholder="Buscar por instrutor..."></div>
                 <div class="form-group" style="flex-direction: row; gap: 10px; justify-content: flex-end;">
-                    <button class="btn btn-danger" onclick="limparFiltrosHistorico()">Limpar Filtros</button>
-                    <button class="btn btn-primary" onclick="carregarHistorico()">Filtrar</button>
+                    <button class="btn btn-danger btn-sm" onclick="limparFiltrosHistorico()">Limpar</button>
+                    <button class="btn btn-primary btn-sm" onclick="carregarHistorico()">Filtrar Registros</button>
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h2>Registos de Retiradas</h2>
+            <h2>Saídas Lançadas</h2>
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
-                            <th>Data</th>
-                            <th>Curso</th>
-                            <th>Instrutor</th>
-                            <th>Itens</th>
+                            <th>Data/Hora</th>
+                            <th>Curso / Turma</th>
+                            <th>Instrutor Responsável</th>
+                            <th>Materiais Retirados</th>
                             <th style="text-align: center;">Ações</th>
                         </tr>
                     </thead>
@@ -183,10 +531,133 @@
             </div>
         </div>
     </section>
+
+    <!-- ABA 3: RELATÓRIOS DE CONSUMO POR CURSO -->
+    <section id="relatorios" class="tab-content">
+        <div class="card">
+            <h2>Balanço de Consumo por Curso (Prestação de Contas SDETR)
+                <button class="btn btn-secondary btn-sm" onclick="imprimirRelatorioConsumo()">🖨️ Imprimir Balanço</button>
+            </h2>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 15px;">Mapeamento quantitativo dos materiais empregados em cada formação profissional.</p>
+            
+            <div style="overflow-x: auto;">
+                <table id="table-relatorio-consumo">
+                    <thead>
+                        <tr>
+                            <th>Curso Beneficiado</th>
+                            <th>Total de Saídas</th>
+                            <th>Resumo dos Insumos Mais Demandados</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-relatorio-consumo">
+                        <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">Clique para carregar os dados...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- MODAL: REGISTRO FORMAL DE ENTRADA -->
+<div id="modal-entrada-insumo" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Registrar Entrada de Material no Saldo</h3>
+            <button class="btn btn-outline btn-sm" onclick="fecharModalEntrada()">✕</button>
+        </div>
+        <div class="form-group" style="margin-bottom: 12px;">
+            <label>Item Selecionado</label>
+            <input type="text" id="modal-entrada-nome" readonly>
+            <input type="hidden" id="modal-entrada-id">
+        </div>
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Quantidade de Entrada</label>
+                <input type="number" id="modal-entrada-qtd" min="0.1" step="any" placeholder="Ex: 10">
+            </div>
+            <div class="form-group">
+                <label>Motivo da Movimentação</label>
+                <select id="modal-entrada-motivo">
+                    <option value="Compra/Empenho">Compra / Empenho Oficial</option>
+                    <option value="Doacao">Doação Recebida</option>
+                    <option value="Estorno">Estorno / Devolução de Aula</option>
+                    <option value="Ajuste">Ajuste de Balanço / Inventário</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Nº Documento / Nota Fiscal / Observação</label>
+                <input type="text" id="modal-entrada-obs" placeholder="Ex: NF 1284 ou Memorando 45/2026">
+            </div>
+        </div>
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn btn-secondary" onclick="confirmarEntradaModal()">Confirmar Entrada no Estoque</button>
+            <button class="btn btn-outline btn-sm" onclick="fecharModalEntrada()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: EDIÇÃO COMPLETA DE INSUMO (ADMIN) -->
+<div id="modal-editar-insumo" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3>Editar Dados Cadastrais do Insumo</h3>
+            <button class="btn btn-outline btn-sm" onclick="fecharModalEdicao()">✕</button>
+        </div>
+        <input type="hidden" id="modal-edit-id">
+        <div class="form-grid">
+            <div class="form-group" style="grid-column: span 2;">
+                <label>Descrição do Insumo</label>
+                <input type="text" id="modal-edit-item" placeholder="Descrição do insumo">
+            </div>
+            <div class="form-group">
+                <label>Categoria Operacional</label>
+                <select id="modal-edit-categoria">
+                    <option value="Alimentos">Alimentos / Gastronomia</option>
+                    <option value="Beleza">Beleza e Estética</option>
+                    <option value="Costura">Costura e Artesanato</option>
+                    <option value="Administrativo">Administrativo e Limpeza</option>
+                    <option value="Geral">Uso Geral / Permanente</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Unidade de Medida</label>
+                <select id="modal-edit-unidade">
+                    <option value="UN">UN</option>
+                    <option value="KG">KG</option>
+                    <option value="LT">LT</option>
+                    <option value="PCT">PCT</option>
+                    <option value="CX">CX</option>
+                    <option value="MTR">METRO</option>
+                    <option value="RL">ROLO</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Quantidade Atual (Bloqueada para Edição)</label>
+                <input type="number" id="modal-edit-qtd" readonly style="opacity: 0.7; cursor: not-allowed;" title="A quantidade não pode ser alterada manualmente por aqui. Utilize Entradas/Saídas.">
+            </div>
+            <div class="form-group">
+                <label>Estoque Mínimo (Alerta)</label>
+                <input type="number" id="modal-edit-minimo" min="0">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label style="margin: 0;">Data de Validade</label>
+                    <label style="display: flex; align-items: center; gap: 5px; font-size: 0.72rem; cursor: pointer; text-transform: none;">
+                        <input type="checkbox" id="modal-edit-sem-validade" onchange="alternarSemValidadeEdicao(this.checked)" style="cursor: pointer;">
+                        Item sem validade
+                    </label>
+                </div>
+                <input type="date" id="modal-edit-validade">
+            </div>
+        </div>
+        <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="btn btn-secondary" onclick="confirmarEdicaoModal()">Salvar Alterações</button>
+            <button class="btn btn-outline btn-sm" onclick="fecharModalEdicao()">Cancelar</button>
+        </div>
+    </div>
 </div>
 
 <script>
-    // Configurações do Supabase - Produção Ativa
     const supabaseUrl = 'https://qdmityjaqwvcesejsexh.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkbWl0eWphcXd2Y2VzZWpzZXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2ODU4NzAsImV4cCI6MjA5NDI2MTg3MH0.cqmB5B-lTaC1TaQwXuOlWjKjlnTufaGq6ndlm3K1uvI';
     const supa = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -196,8 +667,31 @@
     let itensEstoqueGlobais = [];
     let carrinhoRetirada = [];
 
-    // Verificação de Sessão Ativa ao Carregar o DOM
+    let cursosMemoria = [];
+    let turmasMemoria = [];
+    let instrutoresMemoria = [];
+    let historicoSaidasMemoria = [];
+    let modoVisualizacao = 'agrupado'; // 'agrupado' ou 'detalhado'
+
+    // --- Gestão de Tema Visual (Claro / Escuro) ---
+    function aplicarTemaSalvo() {
+        const temaSalvo = localStorage.getItem('sge_tema_ccp') || 'dark';
+        document.documentElement.setAttribute('data-theme', temaSalvo);
+        const btn = document.getElementById('btn-alternador-tema');
+        if (btn) btn.innerText = temaSalvo === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+    }
+
+    function alternarTemaVisual() {
+        const temaAtual = document.documentElement.getAttribute('data-theme') || 'dark';
+        const novoTema = temaAtual === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', novoTema);
+        localStorage.setItem('sge_tema_ccp', novoTema);
+        const btn = document.getElementById('btn-alternador-tema');
+        if (btn) btn.innerText = novoTema === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+    }
+
     document.addEventListener("DOMContentLoaded", async () => {
+        aplicarTemaSalvo();
         try {
             const { data: { session }, error } = await supa.auth.getSession();
             if (session && !error) {
@@ -205,18 +699,18 @@
                 await carregarPerfilUtilizador();
             }
         } catch (err) {
-            console.error("Erro ao verificar sessão activa:", err.message);
+            console.error("Erro na verificação da sessão:", err.message);
         }
     });
 
     async function realizarLogin() {
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-senha').value;
-        if(!email || !password) { alert("Introduza os dados de acesso."); return; }
+        if(!email || !password) { alert("Introduza os dados completos."); return; }
 
         const { data, error } = await supa.auth.signInWithPassword({ email: email, password: password });
         if(error) {
-            alert("Falha na autenticação: Verifique o e-mail e palavra-passe.");
+            alert("Acesso recusado: Verifique suas credenciais.");
             return;
         }
         utilizadorAtual = data.user;
@@ -233,16 +727,15 @@
 
         perfilAtual = perfil.nivel_acesso;
 
-        // Bloqueio categórico para Alunos e Instrutor no módulo de Estoque
         if (perfilAtual === 'Alunos' || perfilAtual === 'Instrutor') {
-            alert("Acesso negado: O seu perfil (" + perfilAtual + ") não possui autorização para acessar o Sistema de Estoque.");
+            alert(`Acesso negado: O perfil (${perfilAtual}) não tem permissão para acessar o Almoxarifado.`);
             await supa.auth.signOut();
+            window.location.reload();
             return;
         }
 
         document.getElementById('user-profile-display').innerText = perfilAtual;
         
-        // Aplica modo leitura para a Diretora
         if (perfilAtual === 'Diretora') {
             document.body.classList.add('readonly-mode');
         } else {
@@ -252,12 +745,48 @@
         document.getElementById('login-screen').style.display = 'none';
         document.getElementById('main-content').style.display = 'block';
 
+        await carregarTabelasAuxiliares();
         await carregarEstoque();
+    }
+
+    async function carregarTabelasAuxiliares() {
+        const [resCursos, resTurmas, resInst] = await Promise.all([
+            supa.from('cursos').select('id, nome').eq('status', 'Ativo').order('nome'),
+            supa.from('turmas').select('id, curso_nome, identificador').eq('status', 'Ativo').order('curso_nome'),
+            supa.from('instrutores').select('id, nome').order('nome')
+        ]);
+
+        cursosMemoria = resCursos.data || [];
+        turmasMemoria = resTurmas.data || [];
+        instrutoresMemoria = resInst.data || [];
+
+        const selCurso = document.getElementById('ret-curso-select');
+        selCurso.innerHTML = '<option value="">Selecione o Curso Solicitante...</option>';
+        cursosMemoria.forEach(c => {
+            selCurso.innerHTML += `<option value="${c.nome}">${c.nome}</option>`;
+        });
+
+        const selInst = document.getElementById('ret-instrutor-select');
+        selInst.innerHTML = '<option value="">Selecione o Instrutor Responsável...</option>';
+        instrutoresMemoria.forEach(i => {
+            selInst.innerHTML += `<option value="${i.nome}">${i.nome}</option>`;
+        });
+    }
+
+    function atualizarTurmasRetirada(cursoNome) {
+        const selTurma = document.getElementById('ret-turma-select');
+        selTurma.innerHTML = '<option value="Uso Geral do Curso">Uso Geral / Sem Turma Específica</option>';
+        if (!cursoNome) return;
+
+        const turmasDoCurso = turmasMemoria.filter(t => t.curso_nome === cursoNome);
+        turmasDoCurso.forEach(t => {
+            selTurma.innerHTML += `<option value="${t.identificador}">${t.identificador}</option>`;
+        });
     }
 
     function verificarPermissaoEscrita() {
         if (perfilAtual === 'Diretora') {
-            alert("Operação não permitida: O perfil 'Diretora' possui apenas privilégios de leitura e impressão.");
+            alert("Operação não permitida: O perfil 'Diretora' possui apenas privilégios de leitura e auditoria.");
             return false;
         }
         return true;
@@ -274,6 +803,7 @@
         document.getElementById(tabId).classList.add('active');
         event.currentTarget.classList.add('active');
         if(tabId === 'historico') carregarHistorico();
+        if(tabId === 'relatorios') processarRelatorioConsumo();
     }
 
     function toggleFormNovoItem() { 
@@ -291,275 +821,615 @@
         atualizarSelectRetirada(); 
     }
 
-    async function salvarNovoItem() {
-        if(!verificarPermissaoEscrita()) return;
-        const item = document.getElementById('new-item-desc').value.trim();
-        const qtd = parseFloat(document.getElementById('new-item-qtd').value) || 0;
-        const un = document.getElementById('new-item-un').value;
-        const validade = document.getElementById('new-item-validade').value || null;
-        if(!item) return;
-        
-        const { data: ex } = await supa.from('estoque_insumos').select('*').ilike('item', item);
-        if (ex && ex.length > 0) {
-            const mesmoLote = ex.find(e => e.validade === validade);
-            if (mesmoLote) { alert("Este item já existe com esta data de validade."); return; }
-            const confirmaNovoLote = confirm(`Já existe o item "${item}" com outra validade. Deseja cadastrar um novo lote?`);
-            if(!confirmaNovoLote) return;
+    function alternarSemValidade(semValidade) {
+        const campo = document.getElementById('new-item-validade');
+        if (semValidade) {
+            campo.value = '';
+            campo.disabled = true;
+        } else {
+            campo.disabled = false;
         }
-        await supa.from('estoque_insumos').insert({ item, quantidade: qtd, unidade: un, validade });
-        toggleFormNovoItem(); carregarEstoque(); document.getElementById('new-item-desc').value = '';
     }
 
+    // Auto-preenchimento ao escolher do catálogo
+    function autoPreencherDoCatalogo(valor) {
+        const options = document.querySelectorAll('#catalogo-padrao-insumos option');
+        for (let opt of options) {
+            if (opt.value.toUpperCase() === valor.toUpperCase()) {
+                const un = opt.getAttribute('data-un');
+                const cat = opt.getAttribute('data-cat');
+                if (un) document.getElementById('new-item-un').value = un;
+                if (cat) document.getElementById('new-item-categoria').value = cat;
+                break;
+            }
+        }
+    }
+
+    async function salvarNovoItem() {
+        if(!verificarPermissaoEscrita()) return;
+        const item = document.getElementById('new-item-desc').value.trim().toUpperCase();
+        const categoria = document.getElementById('new-item-categoria').value;
+        const qtd = parseFloat(document.getElementById('new-item-qtd').value) || 0;
+        const un = document.getElementById('new-item-un').value;
+        const minimo = parseFloat(document.getElementById('new-item-minimo').value) || 0;
+        const semValidade = document.getElementById('check-sem-validade').checked;
+        const validade = semValidade ? null : (document.getElementById('new-item-validade').value || null);
+        
+        if(!item) { alert("Informe a descrição do insumo."); return; }
+        
+        const { error } = await supa.from('estoque_insumos').insert({ 
+            item, 
+            categoria: categoria,
+            quantidade: qtd, 
+            unidade: un, 
+            estoque_minimo: minimo,
+            validade 
+        });
+
+        if (error) {
+            await supa.from('estoque_insumos').insert({ item, quantidade: qtd, unidade: un, validade });
+        }
+
+        toggleFormNovoItem(); 
+        await carregarEstoque(); 
+        document.getElementById('new-item-desc').value = '';
+        document.getElementById('check-sem-validade').checked = false;
+        document.getElementById('new-item-validade').disabled = false;
+        document.getElementById('new-item-validade').value = '';
+    }
+
+    // --- CARREGAMENTO DO ESTOQUE E AGRUPAMENTO ---
     async function carregarEstoque() {
         const { data } = await supa.from('estoque_insumos').select('*').order('item');
         if(!data) return;
         itensEstoqueGlobais = data;
-        const body = document.getElementById('lista-estoque-body'); const alertList = document.getElementById('alert-list');
-        body.innerHTML = ''; alertList.innerHTML = ''; let hasAlerts = false; const hoje = new Date(); hoje.setHours(0,0,0,0); const lim = new Date(hoje); lim.setDate(hoje.getDate() + 15);
-        
-        data.forEach(i => {
-            let classe = ''; let dt = '-';
-            if(i.validade) {
-                const [a, m, d] = i.validade.split('-'); const dataVal = new Date(a, m - 1, d);
-                dt = dataVal.toLocaleDateString('pt-BR');
-                if(dataVal <= lim) {
-                    hasAlerts = true; classe = 'style="color: #ef4444; font-weight: bold;"';
-                    let txt = dataVal < hoje ? 'VENCIDO!' : `Vence em: ${dt}`;
-                    alertList.innerHTML += `<div class="alert-item"><span>${i.item} (${i.quantidade} ${i.unidade})</span><span>${txt}</span></div>`;
-                }
-            }
-            
-            // Tratamento direcionado para o perfil Admin
-            const pUpper = perfilAtual ? perfilAtual.toUpperCase() : '';
-            const ehAdmin = (pUpper === 'ADMIN');
 
-            const btnEditar = ehAdmin 
-                ? `<button class="btn btn-warning btn-sm" onclick="editarItem('${i.id}')">✏️ Editar</button>` 
-                : '';
-
-            const acoesHtml = (perfilAtual === 'Diretora') 
-                ? `<span style="color:var(--text-muted); font-size:9pt;">Visualização apenas</span>`
-                : `<button class="btn btn-secondary btn-sm" onclick="registrarEntrada('${i.id}', '${i.item}', ${i.quantidade})">+ Entrada</button>
-                   ${btnEditar}
-                   <button class="btn btn-danger btn-sm" onclick="excluirItem('${i.id}', '${i.item}')">🗑️ Rem</button>`;
-
-            body.innerHTML += `<tr><td><strong>${i.item}</strong></td><td>${i.quantidade}</td><td><span class="badge badge-warning">${i.unidade}</span></td><td ${classe}>${dt}</td>
-                <td style="text-align: center; white-space: nowrap;">${acoesHtml}</td></tr>`;
-        });
-        document.getElementById('validade-alerts').style.display = hasAlerts ? 'block' : 'none';
+        atualizarKpisEAlertas();
+        renderizarTabelaEstoque();
         atualizarSelectRetirada();
     }
 
-    async function editarItem(id) {
-        const pUpper = perfilAtual ? perfilAtual.toUpperCase() : '';
-        if (pUpper !== 'ADMIN') {
-            alert("Acesso negado. Operação restrita ao perfil Admin.");
+    function normalizarChaveItem(nome) {
+        if (!nome) return '';
+        let n = nome.toUpperCase().trim();
+        // Remove acentos
+        n = n.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        // Remove especificações secundárias de embalagem para agrupamento natural
+        n = n.replace(/\s+\d+(\/|\,)?\d*\s*(KG|K|G|GR|LT|ML|UN|PCT)\b/gi, '').trim();
+        return n;
+    }
+
+    function atualizarKpisEAlertas() {
+        const alertList = document.getElementById('alert-list');
+        alertList.innerHTML = '';
+        let hasAlerts = false;
+        let totalCriticos = 0;
+        let lotesVencer = 0;
+
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        const limiteVencimento = new Date(hoje);
+        limiteVencimento.setDate(hoje.getDate() + 15);
+
+        // Agrupamento para calcular itens críticos
+        let grupos = {};
+        itensEstoqueGlobais.forEach(i => {
+            const chave = normalizarChaveItem(i.item);
+            if (!grupos[chave]) {
+                grupos[chave] = { total: 0, minimo: i.estoque_minimo !== undefined ? i.estoque_minimo : 5 };
+            }
+            grupos[chave].total += (i.quantidade || 0);
+
+            if(i.validade && i.quantidade > 0) {
+                const [a, m, d] = i.validade.split('-');
+                const dataVal = new Date(a, m - 1, d);
+                if(dataVal <= limiteVencimento) {
+                    hasAlerts = true;
+                    lotesVencer++;
+                    let txt = dataVal < hoje ? 'VENCIDO!' : `Vence em: ${dataVal.toLocaleDateString('pt-BR')}`;
+                    alertList.innerHTML += `<div class="alert-item"><span>${i.item} (${i.quantidade} ${i.unidade})</span><span>${txt}</span></div>`;
+                }
+            }
+        });
+
+        Object.values(grupos).forEach(g => {
+            if (g.total <= g.minimo) totalCriticos++;
+        });
+
+        document.getElementById('kpi-total-itens').innerText = Object.keys(grupos).length;
+        document.getElementById('kpi-estoque-critico').innerText = totalCriticos;
+        document.getElementById('kpi-lotes-vencer').innerText = lotesVencer;
+        document.getElementById('validade-alerts').style.display = hasAlerts ? 'block' : 'none';
+    }
+
+    function alternarModoVisualizacaoTabela(modo) {
+        modoVisualizacao = modo;
+        renderizarTabelaEstoque();
+    }
+
+    function renderizarTabelaEstoque() {
+        const body = document.getElementById('lista-estoque-body');
+        body.innerHTML = '';
+
+        if (!itensEstoqueGlobais || itensEstoqueGlobais.length === 0) {
+            body.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:25px;">Nenhum insumo cadastrado no estoque.</td></tr>';
             return;
         }
 
-        const itemDb = itensEstoqueGlobais.find(i => i.id === id);
-        if (!itemDb) return;
-
-        const novoNome = prompt("Nova descrição do item:", itemDb.item);
-        if (novoNome === null) return; 
-
-        const novaQtd = prompt("Nova quantidade total em estoque:", itemDb.quantidade);
-        if (novaQtd === null) return;
-
-        const novaUn = prompt("Nova unidade (Ex: UN, KG, LT, PCT, CX):", itemDb.unidade);
-        if (novaUn === null) return;
-
-        let novaValidade = itemDb.validade || "";
-        const inputValidade = prompt("Nova validade (AAAA-MM-DD) ou deixe em branco para sem validade:", novaValidade);
-        if (inputValidade === null) return;
-        novaValidade = inputValidade.trim() === "" ? null : inputValidade;
-
-        const qtdParse = parseFloat(novaQtd);
-        if (isNaN(qtdParse) || qtdParse < 0) {
-            alert("Valor inválido inserido para a quantidade.");
-            return;
-        }
-
-        const { error } = await supa
-            .from('estoque_insumos')
-            .update({ 
-                item: novoNome.trim(), 
-                quantidade: qtdParse,
-                unidade: novaUn.toUpperCase(),
-                validade: novaValidade
-            })
-            .eq('id', id);
-
-        if (error) {
-            alert("Falha na comunicação com o banco de dados: " + error.message);
+        if (modoVisualizacao === 'detalhado') {
+            renderizarVisaoDetalhada(body);
         } else {
-            carregarEstoque();
+            renderizarVisaoAgrupada(body);
         }
     }
 
-    async function registrarEntrada(id, nome, qtdAtual) {
+    // Visão 1: Acordeão Agrupado por Insumo Base
+    function renderizarVisaoAgrupada(body) {
+        let grupos = {};
+
+        itensEstoqueGlobais.forEach(item => {
+            const chave = normalizarChaveItem(item.item);
+            if (!grupos[chave]) {
+                grupos[chave] = {
+                    nomeExibicao: item.item.split(/\s+\d/)[0].trim(),
+                    categoria: item.categoria || 'Geral',
+                    unidade: item.unidade,
+                    estoqueMinimo: item.estoque_minimo !== undefined ? item.estoque_minimo : 5,
+                    saldoTotal: 0,
+                    lotes: []
+                };
+            }
+            grupos[chave].saldoTotal += (item.quantidade || 0);
+            grupos[chave].lotes.push(item);
+        });
+
+        Object.keys(grupos).sort().forEach((chave, index) => {
+            const g = grupos[chave];
+            const isCritico = g.saldoTotal <= g.estoqueMinimo;
+            const badgeSaldo = isCritico
+                ? `<span class="badge badge-danger">${g.saldoTotal} (Crítico)</span>`
+                : `<span class="badge badge-success">${g.saldoTotal}</span>`;
+
+            const qtdLotes = g.lotes.length;
+            const loteLabel = qtdLotes === 1 ? `1 lote registrado` : `📁 ${qtdLotes} lotes agrupados (Clique p/ ver)`;
+
+            const ehAdmin = (perfilAtual && perfilAtual.toUpperCase() === 'ADMIN');
+
+            const idGrupo = `grupo-lotes-${index}`;
+
+            body.innerHTML += `
+                <tr class="tr-grupo-pai" onclick="toggleLinhasFilhas('${idGrupo}', this)">
+                    <td style="text-align: center; color: var(--primary); font-size: 11pt;">▸</td>
+                    <td><strong>${g.nomeExibicao}</strong></td>
+                    <td><span class="badge badge-info">${g.categoria}</span></td>
+                    <td style="text-align: center;">${badgeSaldo}</td>
+                    <td>${g.unidade}</td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem;">${loteLabel}</td>
+                    <td style="text-align: center; color: var(--text-muted); font-size: 0.78rem;">
+                        Expandir ▾
+                    </td>
+                </tr>
+            `;
+
+            // Linhas filhas (lotes individuais)
+            g.lotes.forEach(lote => {
+                let dt = lote.validade ? new Date(lote.validade).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Sem Validade';
+                const isZerado = lote.quantidade <= 0;
+                const saldoLote = isZerado 
+                    ? `<span class="badge badge-danger">0 (Zerado)</span>` 
+                    : `${lote.quantidade}`;
+
+                const btnEditar = ehAdmin 
+                    ? `<button class="btn btn-warning btn-sm" style="padding: 2px 6px;" onclick="abrirModalEdicao('${lote.id}')">✏️</button>` 
+                    : '';
+
+                body.innerHTML += `
+                    <tr class="tr-filho-lote ${idGrupo}" style="display: none;">
+                        <td></td>
+                        <td style="padding-left: 30px; font-size: 0.82rem;">↳ ${lote.item}</td>
+                        <td><span style="font-size: 0.75rem; color: var(--text-muted);">${lote.categoria || 'Geral'}</span></td>
+                        <td style="text-align: center; font-size: 0.85rem;">${saldoLote}</td>
+                        <td style="font-size: 0.82rem;">${lote.unidade}</td>
+                        <td style="font-size: 0.82rem; color: var(--text-muted);">Validade: <strong>${dt}</strong></td>
+                        <td style="text-align: center; white-space: nowrap;">
+                            <button class="btn btn-secondary btn-sm" style="padding: 2px 6px;" onclick="abrirModalEntrada('${lote.id}', '${lote.item}')">+ Entrada</button>
+                            ${btnEditar}
+                            <button class="btn btn-danger btn-sm" style="padding: 2px 6px;" onclick="excluirItem('${lote.id}', '${lote.item}')">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        });
+    }
+
+    function toggleLinhasFilhas(classe, linhaPai) {
+        const filhas = document.querySelectorAll(`.${classe}`);
+        const icone = linhaPai.querySelector('td:first-child');
+        const estaoOcultas = filhas[0] && filhas[0].style.display === 'none';
+
+        filhas.forEach(f => f.style.display = estaoOcultas ? 'table-row' : 'none');
+        if (icone) icone.innerText = estaoOcultas ? '▾' : '▸';
+    }
+
+    // Visão 2: Detalhada lote por lote tradicional
+    function renderizarVisaoDetalhada(body) {
+        const ehAdmin = (perfilAtual && perfilAtual.toUpperCase() === 'ADMIN');
+
+        itensEstoqueGlobais.forEach(i => {
+            const dt = i.validade ? new Date(i.validade).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '-';
+            const isZerado = i.quantidade <= 0;
+            const badgeSaldo = isZerado
+                ? `<span class="badge badge-danger">0 (Zerado)</span>`
+                : (i.quantidade <= (i.estoque_minimo || 5) ? `<span class="badge badge-warning">${i.quantidade}</span>` : `<span class="badge badge-success">${i.quantidade}</span>`);
+
+            const btnEditar = ehAdmin 
+                ? `<button class="btn btn-warning btn-sm" onclick="abrirModalEdicao('${i.id}')">✏️</button>` 
+                : '';
+
+            body.innerHTML += `
+                <tr data-categoria="${i.categoria || 'Geral'}">
+                    <td>•</td>
+                    <td><strong>${i.item}</strong></td>
+                    <td><span class="badge badge-info">${i.categoria || 'Geral'}</span></td>
+                    <td style="text-align: center;">${badgeSaldo}</td>
+                    <td>${i.unidade}</td>
+                    <td>${dt}</td>
+                    <td style="text-align: center; white-space: nowrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="abrirModalEntrada('${i.id}', '${i.item}')">+ Entrada</button>
+                        ${btnEditar}
+                        <button class="btn btn-danger btn-sm" onclick="excluirItem('${i.id}', '${i.item}')">🗑️</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Modal de Entrada (Sempre individual para o item/lote)
+    function abrirModalEntrada(id, nome) {
         if(!verificarPermissaoEscrita()) return;
-        const v = prompt(`Informe a quantidade de entrada para "${nome}":`);
-        if(v && !isNaN(v)) { await supa.from('estoque_insumos').update({ quantidade: qtdAtual + parseFloat(v) }).eq('id', id); carregarEstoque(); }
+        document.getElementById('modal-entrada-id').value = id;
+        document.getElementById('modal-entrada-nome').value = nome;
+        document.getElementById('modal-entrada-qtd').value = '';
+        document.getElementById('modal-entrada-obs').value = '';
+        document.getElementById('modal-entrada-insumo').style.display = 'flex';
+    }
+
+    function fecharModalEntrada() {
+        document.getElementById('modal-entrada-insumo').style.display = 'none';
+    }
+
+    async function confirmarEntradaModal() {
+        const id = document.getElementById('modal-entrada-id').value;
+        const qtdAdicionar = parseFloat(document.getElementById('modal-entrada-qtd').value);
+        if (isNaN(qtdAdicionar) || qtdAdicionar <= 0) return alert("Digite uma quantidade válida para entrada.");
+
+        const itemDb = itensEstoqueGlobais.find(i => i.id === id);
+        if(!itemDb) return;
+
+        const novaQtd = (itemDb.quantidade || 0) + qtdAdicionar;
+        await supa.from('estoque_insumos').update({ quantidade: novaQtd }).eq('id', id);
+
+        fecharModalEntrada();
+        await carregarEstoque();
+    }
+
+    // --- MODAL DE EDIÇÃO DE DADOS CADASTRAIS (SEM ALTERAR QUANTIDADE) ---
+    function abrirModalEdicao(id) {
+        if (perfilAtual && perfilAtual.toUpperCase() !== 'ADMIN') return alert("Operação restrita ao perfil Admin.");
+        const itemDb = itensEstoqueGlobais.find(i => i.id === id);
+        if (!itemDb) return;
+
+        document.getElementById('modal-edit-id').value = itemDb.id;
+        document.getElementById('modal-edit-item').value = itemDb.item || '';
+        document.getElementById('modal-edit-categoria').value = itemDb.categoria || 'Geral';
+        document.getElementById('modal-edit-unidade').value = itemDb.unidade || 'UN';
+        document.getElementById('modal-edit-qtd').value = itemDb.quantidade || 0;
+        document.getElementById('modal-edit-minimo').value = itemDb.estoque_minimo !== undefined ? itemDb.estoque_minimo : 5;
+
+        const checkSemVal = document.getElementById('modal-edit-sem-validade');
+        const campoVal = document.getElementById('modal-edit-validade');
+
+        if (itemDb.validade) {
+            checkSemVal.checked = false;
+            campoVal.disabled = false;
+            campoVal.value = itemDb.validade;
+        } else {
+            checkSemVal.checked = true;
+            campoVal.disabled = true;
+            campoVal.value = '';
+        }
+
+        document.getElementById('modal-editar-insumo').style.display = 'flex';
+    }
+
+    function alternarSemValidadeEdicao(semValidade) {
+        const campoVal = document.getElementById('modal-edit-validade');
+        if (semValidade) {
+            campoVal.value = '';
+            campoVal.disabled = true;
+        } else {
+            campoVal.disabled = false;
+        }
+    }
+
+    function fecharModalEdicao() {
+        document.getElementById('modal-editar-insumo').style.display = 'none';
+    }
+
+    async function confirmarEdicaoModal() {
+        if (perfilAtual && perfilAtual.toUpperCase() !== 'ADMIN') return alert("Operação restrita ao perfil Admin.");
+        const id = document.getElementById('modal-edit-id').value;
+        const novoItem = document.getElementById('modal-edit-item').value.trim().toUpperCase();
+        const novaCategoria = document.getElementById('modal-edit-categoria').value;
+        const novaUnidade = document.getElementById('modal-edit-unidade').value.toUpperCase();
+        const novoMinimo = parseFloat(document.getElementById('modal-edit-minimo').value) || 0;
+        const semValidade = document.getElementById('modal-edit-sem-validade').checked;
+        const novaValidade = semValidade ? null : (document.getElementById('modal-edit-validade').value || null);
+
+        if (!novoItem) return alert("A descrição do insumo não pode ficar vazia.");
+
+        const { error } = await supa.from('estoque_insumos').update({
+            item: novoItem,
+            categoria: novaCategoria,
+            unidade: novaUnidade,
+            estoque_minimo: novoMinimo,
+            validade: novaValidade
+        }).eq('id', id);
+
+        if (error) {
+            alert("Erro ao salvar alterações do insumo: " + error.message);
+            return;
+        }
+
+        fecharModalEdicao();
+        await carregarEstoque();
     }
 
     async function excluirItem(id, nome) {
         if(!verificarPermissaoEscrita()) return;
-        if(confirm(`Deseja remover '${nome}' do inventário?`)) { await supa.from('estoque_insumos').delete().eq('id', id); carregarEstoque(); }
+        if(confirm(`Tem certeza que deseja remover '${nome}' do almoxarifado?`)) { 
+            await supa.from('estoque_insumos').delete().eq('id', id); 
+            await carregarEstoque(); 
+        }
     }
 
-    function atualizarSelectRetirada() { document.getElementById('ret-item-select').innerHTML = '<option value="">Selecione...</option>' + itensEstoqueGlobais.map(i => `<option value="${i.id}">${i.item} - Saldo: ${i.quantidade} ${i.unidade}</option>`).join(''); }
+    // --- LIMPEZA DE ITENS ZERADOS ---
+    async function limparTodosZeradosGlobal() {
+        if (!verificarPermissaoEscrita()) return;
+        const zerados = itensEstoqueGlobais.filter(i => (i.quantidade || 0) <= 0);
 
-    async function addRetiradaItem() {
+        if (zerados.length === 0) {
+            return alert("Nenhum item com saldo zerado foi localizado no inventário!");
+        }
+
+        const msg = `Foram identificados ${zerados.length} lote(s) com saldo ZERO.\n\nDeseja excluir todos definitivamente para limpar a visualização?`;
+        if (!confirm(msg)) return;
+
+        const idsZerados = zerados.map(z => z.id);
+        const { error } = await supa.from('estoque_insumos').delete().in('id', idsZerados);
+
+        if (error) {
+            alert("Erro ao excluir itens zerados: " + error.message);
+        } else {
+            alert(`${zerados.length} lote(s) zerado(s) foram excluídos com sucesso!`);
+            await carregarEstoque();
+        }
+    }
+
+    function atualizarSelectRetirada() { 
+        const select = document.getElementById('ret-item-select');
+        // Só exibe itens com saldo disponível para retirada
+        const comSaldo = itensEstoqueGlobais.filter(i => (i.quantidade || 0) > 0);
+        select.innerHTML = '<option value="">Selecione o insumo disponível...</option>' + 
+            comSaldo.map(i => {
+                const val = i.validade ? ` [Val: ${i.validade}]` : '';
+                return `<option value="${i.id}">${i.item}${val} (Saldo: ${i.quantidade} ${i.unidade})</option>`;
+            }).join(''); 
+    }
+
+    function addRetiradaItem() {
         if(!verificarPermissaoEscrita()) return;
-        const id = document.getElementById('ret-item-select').value; const qtd = parseFloat(document.getElementById('ret-qtd').value);
-        if(!id || !qtd) return;
+        const id = document.getElementById('ret-item-select').value; 
+        const qtd = parseFloat(document.getElementById('ret-qtd').value);
+        if(!id || !qtd || qtd <= 0) return alert("Selecione o insumo e informe a quantidade.");
+        
         const itemDb = itensEstoqueGlobais.find(i => i.id === id);
-        if(qtd > itemDb.quantidade) { alert("Quantidade superior ao saldo."); return; }
+        if(qtd > itemDb.quantidade) return alert(`Saldo insuficiente em estoque. Disponível: ${itemDb.quantidade} ${itemDb.unidade}`);
+        
         const ex = carrinhoRetirada.find(c => c.id === id);
-        if(ex) ex.qtd += qtd; else carrinhoRetirada.push({ id, nome: itemDb.item, unidade: itemDb.unidade, qtd });
+        if(ex) {
+            if (ex.qtd + qtd > itemDb.quantidade) return alert("A soma excede o saldo disponível.");
+            ex.qtd += qtd; 
+        } else {
+            carrinhoRetirada.push({ id, nome: itemDb.item, unidade: itemDb.unidade, qtd });
+        }
         renderCarrinho();
     }
 
-    function removerDoCarrinho(id) { carrinhoRetirada = carrinhoRetirada.filter(c => c.id !== id); renderCarrinho(); }
-    function renderCarrinho() { const l = document.getElementById('ret-cart-list'); if(carrinhoRetirada.length === 0) { l.innerHTML = '<div style="text-align: center; font-size: 9pt;">Vazio.</div>'; return; } l.innerHTML = carrinhoRetirada.map(c => `<div class="cart-item"><span>${c.nome}</span><span>${c.qtd} ${c.unidade}</span><button class="btn-sm btn-danger" onclick="removerDoCarrinho('${c.id}')">X</button></div>`).join(''); }
+    function removerDoCarrinho(id) { 
+        carrinhoRetirada = carrinhoRetirada.filter(c => c.id !== id); 
+        renderCarrinho(); 
+    }
 
-    function gerarImpressaoRetirada(registro) {
-        const janelaImpressao = window.open('', '_blank', 'width=900,height=700');
-        const dataFormatada = new Date(registro.data_retirada).toLocaleString('pt-BR');
-        
-        const linhasTabela = registro.itens_retirados.map(it => {
-            return `<tr>
-                <td>${it.nome}</td>
-                <td style="text-align: center;">${it.qtd}</td>
-                <td style="text-align: center;">${it.unidade}</td>
-            </tr>`;
-        }).join('');
-
-        janelaImpressao.document.write(`
-            <html>
-            <head>
-                <title>Comprovante de Retirada - CCP</title>
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; color: black; background: white; }
-                    .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-                    .print-title { font-size: 14pt; font-weight: bold; margin: 10px 0; text-transform: uppercase; }
-                    .print-info { font-size: 11pt; margin-bottom: 20px; line-height: 1.6; }
-                    .print-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 11pt; }
-                    .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: left; }
-                    .print-table th { background-color: #f0f0f0 !important; font-weight: bold; }
-                    .print-signatures { display: flex; justify-content: space-around; margin-top: 60px; }
-                    .print-sig-line { width: 40%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 10pt; }
-                </style>
-            </head>
-            <body>
-                <div class="print-header">
-                    <div class="print-title">Recibo de Retirada de Material - CCP</div>
-                </div>
-                <div class="print-info">
-                    <strong>Data/Hora:</strong> ${dataFormatada}<br>
-                    <strong>Curso Destino:</strong> ${registro.curso}<br>
-                    <strong>Instrutor/Responsável:</strong> ${registro.instrutor}
-                </div>
-                <table class="print-table">
-                    <thead>
-                        <tr>
-                            <th>Item / Insumo</th>
-                            <th style="text-align: center;">Quantidade</th>
-                            <th style="text-align: center;">Unidade</th>
-                        </tr>
-                    </thead>
-                    <tbody>${linhasTabela}</tbody>
-                </table>
-                <div class="print-signatures">
-                    <div class="print-sig-line">Instrutor (Assinatura)</div>
-                    <div class="print-sig-line">Responsável pelo Estoque</div>
-                </div>
-            </body>
-            </html>
-        `);
-
-        janelaImpressao.document.close();
-        setTimeout(() => {
-            janelaImpressao.print();
-            janelaImpressao.close();
-        }, 300);
+    function renderCarrinho() { 
+        const l = document.getElementById('ret-cart-list'); 
+        if(carrinhoRetirada.length === 0) { 
+            l.innerHTML = '<div style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">Carrinho de retirada vazio.</div>'; 
+            return; 
+        } 
+        l.innerHTML = carrinhoRetirada.map(c => `
+            <div class="cart-item">
+                <span><strong>${c.nome}</strong></span>
+                <span>${c.qtd} ${c.unidade}</span>
+                <button class="btn btn-danger btn-sm" onclick="removerDoCarrinho('${c.id}')">✕</button>
+            </div>
+        `).join(''); 
     }
 
     async function finalizarRetirada() {
         if(!verificarPermissaoEscrita()) return;
-        const curso = document.getElementById('ret-destino').value.trim(); 
-        const inst = document.getElementById('ret-instrutor').value.trim();
+        const curso = document.getElementById('ret-curso-select').value; 
+        const turma = document.getElementById('ret-turma-select').value;
+        const inst = document.getElementById('ret-instrutor-select').value;
+        const deveImprimir = document.getElementById('check-imprimir-retirada').checked;
         
         if(!curso || !inst || carrinhoRetirada.length === 0) { 
-            alert("Preencha todos os campos e adicione itens ao carrinho."); 
+            alert("Selecione o curso, o instrutor e adicione ao menos um item ao carrinho."); 
             return; 
         }
+
+        const destinoCompleto = turma ? `${curso} [${turma}]` : curso;
         
         const { data: novoRegistro, error: errReg } = await supa
             .from('registro_retiradas')
-            .insert({ curso, instrutor: inst, itens_retirados: carrinhoRetirada })
+            .insert({ curso: destinoCompleto, instrutor: inst, itens_retirados: carrinhoRetirada })
             .select()
             .single();
 
         if(errReg) { 
-            alert("Erro ao registrar no banco de dados: " + errReg.message); 
+            alert("Falha ao registrar saída no banco de dados: " + errReg.message); 
             return; 
         }
         
+        // Atualiza saldos e pergunta sobre exclusão de lotes que foram a ZERO
+        let lotesZeradosNestaSaida = [];
+
         for(let c of carrinhoRetirada) { 
             const it = itensEstoqueGlobais.find(i => i.id === c.id); 
             if (it) {
-                await supa.from('estoque_insumos').update({ quantidade: it.quantidade - c.qtd }).eq('id', c.id); 
+                const novoSaldo = Math.max(0, it.quantidade - c.qtd);
+                if (novoSaldo === 0) {
+                    lotesZeradosNestaSaida.push(it);
+                }
+                await supa.from('estoque_insumos').update({ quantidade: novoSaldo }).eq('id', c.id); 
+            }
+        }
+
+        // Alerta inteligente de item esgotado
+        if (lotesZeradosNestaSaida.length > 0) {
+            const nomesZerados = lotesZeradosNestaSaida.map(z => `• ${z.item} (${z.quantidade} -> 0)`).join('\n');
+            const desejaExcluir = confirm(`Atenção: O(s) seguinte(s) lote(s) atingiram SALDO ZERO após esta retirada:\n\n${nomesZerados}\n\nDeseja remover este(s) lote(s) zerado(s) do banco de dados agora?`);
+            
+            if (desejaExcluir) {
+                const idsParaDeletar = lotesZeradosNestaSaida.map(z => z.id);
+                await supa.from('estoque_insumos').delete().in('id', idsParaDeletar);
             }
         }
         
-        alert('Retirada cadastrada com sucesso! Iniciando impressão do comprovante...');
-        
-        gerarImpressaoRetirada(novoRegistro);
+        alert('Retirada registrada com sucesso!');
+        if (deveImprimir) {
+            gerarImpressaoRetirada(novoRegistro);
+        }
         
         carrinhoRetirada = []; 
         renderCarrinho(); 
-        document.getElementById('ret-instrutor').value = ''; 
-        document.getElementById('ret-destino').value = ''; 
         toggleFormRetirada(); 
-        carregarEstoque();
+        await carregarEstoque();
     }
 
-    function filtrarEstoque() { const t = document.getElementById('busca-estoque').value.toLowerCase(); document.querySelectorAll('#lista-estoque-body tr').forEach(l => { l.style.display = l.querySelector('td:first-child').innerText.toLowerCase().includes(t) ? '' : 'none'; }); }
-    function limparFiltrosHistorico() { document.getElementById('hist-data-inicio').value = ''; document.getElementById('hist-data-fim').value = ''; document.getElementById('hist-instrutor').value = ''; carregarHistorico(); }
+    function filtrarEstoque() { 
+        const termo = document.getElementById('busca-estoque').value.toLowerCase().trim();
+        const cat = document.getElementById('filtro-categoria-estoque').value;
+
+        document.querySelectorAll('#lista-estoque-body tr').forEach(row => { 
+            const desc = row.innerText.toLowerCase();
+            const catRow = row.getAttribute('data-categoria') || '';
+            const matchTermo = desc.includes(termo);
+            const matchCat = cat === '' || catRow === cat || row.classList.contains('tr-grupo-pai');
+            row.style.display = (matchTermo && matchCat) ? '' : 'none'; 
+        }); 
+    }
+
+    function limparFiltrosHistorico() { 
+        document.getElementById('hist-data-inicio').value = ''; 
+        document.getElementById('hist-data-fim').value = ''; 
+        document.getElementById('hist-instrutor').value = ''; 
+        carregarHistorico(); 
+    }
 
     async function carregarHistorico() {
         let q = supa.from('registro_retiradas').select('*').order('data_retirada', { ascending: false });
-        const ini = document.getElementById('hist-data-inicio').value; const fim = document.getElementById('hist-data-fim').value; const inst = document.getElementById('hist-instrutor').value.trim();
-        if(ini) q = q.gte('data_retirada', ini); if(fim) q = q.lte('data_retirada', fim + 'T23:59:59'); if(inst) q = q.ilike('instrutor', `%${inst}%`);
+        const ini = document.getElementById('hist-data-inicio').value; 
+        const fim = document.getElementById('hist-data-fim').value; 
+        const inst = document.getElementById('hist-instrutor').value.trim();
+
+        if(ini) q = q.gte('data_retirada', ini); 
+        if(fim) q = q.lte('data_retirada', fim + 'T23:59:59'); 
+        if(inst) q = q.ilike('instrutor', `%${inst}%`);
         
         const { data, error } = await q;
-        if(error) { console.error("Erro ao carregar histórico:", error.message); return; }
-        
+        if(error) return;
+
+        historicoSaidasMemoria = data || [];
         const body = document.getElementById('lista-historico-body');
         body.innerHTML = '';
         
-        if(data) {
-            data.forEach(h => {
-                const dataLocal = new Date(h.data_retirada).toLocaleString('pt-BR');
-                const itensTexto = h.itens_retirados.map(it => `${it.nome} (${it.qtd} ${it.unidade})`).join(', ');
-                const registroJson = JSON.stringify(h).replace(/"/g, '&quot;');
-                
-                const acoesHistHtml = (perfilAtual === 'Diretora')
-                    ? `<button class="btn btn-primary btn-sm" onclick="reimprimirRetirada('${registroJson}')">🖨️ Reimp.</button>`
-                    : `<button class="btn btn-primary btn-sm" onclick="reimprimirRetirada('${registroJson}')">🖨️ Reimp.</button>
-                       <button class="btn btn-danger btn-sm" onclick="removerRetirada('${h.id}', '${registroJson}')">🗑️ Estornar</button>`;
-
-                body.innerHTML += `<tr>
-                    <td>${dataLocal}</td>
-                    <td>${h.curso}</td>
-                    <td>${h.instrutor}</td>
-                    <td style="font-size: 8pt;">${itensTexto}</td>
-                    <td style="text-align: center; white-space: nowrap;">${acoesHistHtml}</td>
-                </tr>`;
-            });
+        if(historicoSaidasMemoria.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:20px;">Nenhum registro encontrado.</td></tr>';
+            return;
         }
+
+        historicoSaidasMemoria.forEach(h => {
+            const dataLocal = new Date(h.data_retirada).toLocaleString('pt-BR');
+            const itensTexto = h.itens_retirados.map(it => `${it.nome} (${it.qtd} ${it.unidade})`).join(', ');
+            const registroJson = JSON.stringify(h).replace(/"/g, '&quot;');
+            
+            const acoesHistHtml = (perfilAtual === 'Diretora')
+                ? `<button class="btn btn-primary btn-sm" onclick="reimprimirRetirada('${registroJson}')">🖨️ Reimp.</button>`
+                : `<button class="btn btn-primary btn-sm" onclick="reimprimirRetirada('${registroJson}')">🖨️ Reimp.</button>
+                   <button class="btn btn-danger btn-sm" onclick="removerRetirada('${h.id}', '${registroJson}')">🗑️ Estornar</button>`;
+
+            body.innerHTML += `
+                <tr>
+                    <td style="white-space:nowrap;">${dataLocal}</td>
+                    <td><strong>${h.curso}</strong></td>
+                    <td>${h.instrutor}</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">${itensTexto}</td>
+                    <td style="text-align: center; white-space: nowrap;">${acoesHistHtml}</td>
+                </tr>
+            `;
+        });
+    }
+
+    async function processarRelatorioConsumo() {
+        const tbody = document.getElementById('tbody-relatorio-consumo');
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted); padding:20px;">A calcular consumo por curso...</td></tr>';
+
+        const { data: retiradas } = await supa.from('registro_retiradas').select('*');
+        if(!retiradas || retiradas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Sem movimentações de consumo registradas.</td></tr>';
+            return;
+        }
+
+        let cursosMap = {};
+        retiradas.forEach(r => {
+            const cursoPuro = r.curso.split(' [')[0].trim();
+            if(!cursosMap[cursoPuro]) cursosMap[cursoPuro] = { totalSaidas: 0, itens: {} };
+            
+            cursosMap[cursoPuro].totalSaidas++;
+            if(r.itens_retirados && Array.isArray(r.itens_retirados)) {
+                r.itens_retirados.forEach(it => {
+                    if(!cursosMap[cursoPuro].itens[it.nome]) cursosMap[cursoPuro].itens[it.nome] = 0;
+                    cursosMap[cursoPuro].itens[it.nome] += it.qtd;
+                });
+            }
+        });
+
+        tbody.innerHTML = '';
+        Object.keys(cursosMap).sort().forEach(curso => {
+            const info = cursosMap[curso];
+            const listaItensFormatada = Object.entries(info.itens)
+                .map(([nome, qtd]) => `<strong>${nome}:</strong> ${qtd}`)
+                .join(' • ');
+
+            tbody.innerHTML += `
+                <tr>
+                    <td><strong>📚 ${curso}</strong></td>
+                    <td style="text-align: center;"><span class="badge badge-info">${info.totalSaidas} saídas</span></td>
+                    <td style="font-size: 0.85rem;">${listaItensFormatada || 'Nenhum insumo'}</td>
+                </tr>
+            `;
+        });
     }
 
     function reimprimirRetirada(registroStr) {
@@ -571,74 +1441,114 @@
         if(!verificarPermissaoEscrita()) return;
         const registro = JSON.parse(registroStr.replace(/&quot;/g, '"'));
         
-        const confirma = confirm(`Deseja realmente remover esta saída?\nEsta ação irá deletar o registro histórico e DEVOLVER os itens retirados ao saldo atual do estoque.`);
-        if(!confirma) return;
+        if(!confirm(`Confirma o estorno desta saída?\nOs itens serão reincorporados ao saldo do almoxarifado.`)) return;
 
         for(let c of registro.itens_retirados) {
             const { data: itemDb } = await supa.from('estoque_insumos').select('quantidade').eq('id', c.id).single();
             if(itemDb) {
-                const novaQtd = itemDb.quantidade + c.qtd;
-                await supa.from('estoque_insumos').update({ quantidade: novaQtd }).eq('id', c.id);
+                await supa.from('estoque_insumos').update({ quantidade: itemDb.quantidade + c.qtd }).eq('id', c.id);
             }
         }
 
-        const { error } = await supa.from('registro_retiradas').delete().eq('id', id);
-        
-        if(error) {
-            alert("Erro ao remover registro: " + error.message);
-        } else {
-            alert("Saída estornada e estoque atualizado com sucesso!");
-            carregarHistorico();
-            carregarEstoque();
-        }
+        await supa.from('registro_retiradas').delete().eq('id', id);
+        alert("Saída estornada com sucesso!");
+        await carregarHistorico();
+        await carregarEstoque();
     }
 
-    function imprimirEstoque() {
-        const janelaImpressao = window.open('', '_blank', 'width=900,height=700');
-        const dataAtual = new Date().toLocaleDateString('pt-BR');
+    function gerarImpressaoRetirada(registro) {
+        const janela = window.open('', '_blank', 'width=900,height=700');
+        const dataFormatada = new Date(registro.data_retirada).toLocaleString('pt-BR');
         
-        const linhasTabela = itensEstoqueGlobais.map(i => {
-            const val = i.validade ? new Date(i.validade).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '-';
-            return `<tr><td>${i.item}</td><td style="text-align: center;">${i.quantidade}</td><td style="text-align: center;">${i.unidade}</td><td>${val}</td></tr>`;
-        }).join('');
+        const linhas = registro.itens_retirados.map(it => `
+            <tr>
+                <td>${it.nome}</td>
+                <td style="text-align: center;">${it.qtd}</td>
+                <td style="text-align: center;">${it.unidade}</td>
+            </tr>
+        `).join('');
 
-        janelaImpressao.document.write(`
+        janela.document.write(`
             <html>
             <head>
-                <title>Relatório de Estoque - CCP</title>
+                <title>Recibo de Saída - CCP</title>
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; color: black; background: white; }
-                    .print-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-                    .print-title { font-size: 16pt; font-weight: bold; margin: 10px 0; text-transform: uppercase; }
-                    .print-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 11pt; }
-                    .print-table th, .print-table td { border: 1px solid #000; padding: 6px; text-align: left; }
-                    .print-table th { background-color: #f0f0f0 !important; font-weight: bold; }
-                    .print-signatures { display: flex; justify-content: space-around; margin-top: 60px; }
-                    .print-sig-line { width: 40%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 10pt; }
+                    body { font-family: Arial, sans-serif; margin: 25px; color: #000; }
+                    .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 12px; margin-bottom: 20px; }
+                    .title { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+                    .info { font-size: 11pt; margin-bottom: 25px; line-height: 1.6; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 40px; font-size: 11pt; }
+                    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                    .sigs { display: flex; justify-content: space-around; margin-top: 60px; }
+                    .sig-line { width: 40%; border-top: 1px solid #000; text-align: center; padding-top: 5px; font-size: 10pt; }
                 </style>
             </head>
             <body>
-                <div class="print-header">
-                    <div class="print-title">Relatório de Estoque Atual - CCP</div>
-                    <div style="text-align: center; font-size:11pt;">Data: ${dataAtual}</div>
+                <div class="header">
+                    <div class="title">Prefeitura de Iguaba Grande • SDETR</div>
+                    <div style="font-size: 12pt; margin-top: 4px;">Centro de Capacitação Profissional • Comprovante de Retirada</div>
                 </div>
-                <table class="print-table">
-                    <thead><tr><th>Item</th><th style="text-align: center;">Quantidade</th><th style="text-align: center;">Unidade</th><th>Validade</th></tr></thead>
-                    <tbody>${linhasTabela}</tbody>
+                <div class="info">
+                    <strong>Data/Hora:</strong> ${dataFormatada}<br>
+                    <strong>Destino / Turma:</strong> ${registro.curso}<br>
+                    <strong>Instrutor Responsável:</strong> ${registro.instrutor}
+                </div>
+                <table>
+                    <thead><tr><th>Insumo Requisitado</th><th style="text-align: center; width: 120px;">Qtd</th><th style="text-align: center; width: 100px;">Unidade</th></tr></thead>
+                    <tbody>${linhas}</tbody>
                 </table>
-                <div class="print-signatures">
-                    <div class="print-sig-line">Almoxarifado / Responsável</div>
-                    <div class="print-sig-line">Coordenação CCP</div>
+                <div class="sigs">
+                    <div class="sig-line">Instrutor Solicitante</div>
+                    <div class="sig-line">Almoxarifado CCP</div>
                 </div>
             </body>
             </html>
         `);
+        janela.document.close();
+        setTimeout(() => { janela.print(); janela.close(); }, 400);
+    }
 
-        janelaImpressao.document.close();
-        setTimeout(() => {
-            janelaImpressao.print();
-            janelaImpressao.close();
-        }, 300);
+    function imprimirEstoque() {
+        const janela = window.open('', '_blank', 'width=900,height=700');
+        const dataAtual = new Date().toLocaleDateString('pt-BR');
+        
+        const linhas = itensEstoqueGlobais.map(i => {
+            const val = i.validade ? new Date(i.validade).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '-';
+            return `<tr><td>${i.item}</td><td>${i.categoria || 'Geral'}</td><td style="text-align:center;">${i.quantidade}</td><td style="text-align:center;">${i.unidade}</td><td style="text-align:center;">${val}</td></tr>`;
+        }).join('');
+
+        janela.document.write(`
+            <html>
+            <head>
+                <title>Inventário Geral - CCP</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 25px; color: #000; }
+                    .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+                    .title { font-size: 14pt; font-weight: bold; text-transform: uppercase; }
+                    table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+                    th, td { border: 1px solid #000; padding: 7px; text-align: left; }
+                    th { background-color: #f2f2f2; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div class="title">Inventário de Almoxarifado • Centro de Capacitação Profissional</div>
+                    <div style="font-size: 10pt; margin-top: 5px;">Data de Emissão: ${dataAtual}</div>
+                </div>
+                <table>
+                    <thead><tr><th>Insumo</th><th>Categoria</th><th style="text-align:center;">Saldo</th><th style="text-align:center;">Unidade</th><th style="text-align:center;">Validade</th></tr></thead>
+                    <tbody>${linhas}</tbody>
+                </table>
+            </body>
+            </html>
+        `);
+        janela.document.close();
+        setTimeout(() => { janela.print(); janela.close(); }, 400);
+    }
+
+    function imprimirRelatorioConsumo() {
+        window.print();
     }
 </script>
 </body>
